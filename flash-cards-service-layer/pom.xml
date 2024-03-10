@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>codingchica</groupId>
+    <artifactId>flash-cards</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>flash-cards-service-layer</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Flash Cards Service Layer</name>
+  <description>The flash-cards's available operations and coordinated response to each.  The business logic for the application.</description>
+
+  <dependencies>
+    <!-- Runtime dependencies -->
+    <dependency>
+      <!-- https://github.com/dropwizard/dropwizard/tree/release/2.1.x/dropwizard-core -->
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-core</artifactId>
+    </dependency>
+    <dependency>
+      <!--
+            https://github.com/dropwizard/dropwizard/tree/release/2.1.x/dropwizard-client
+            https://www.dropwizard.io/en/latest/manual/testing.html
+            -->
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-client</artifactId>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/FasterXML/jackson-annotations -->
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/jakartaee/validation -->
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/hibernate/hibernate-validator -->
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/google/guava -->
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/apache/commons-collections -->
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+    </dependency>
+    <dependency>
+      <!--
+            https://commons.apache.org/proper/commons-lang/
+            https://github.com/apache/commons-lang
+            -->
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>flash-cards-domain</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <!--
+            https://github.com/dropwizard/dropwizard/tree/release/2.1.x/dropwizard-testing
+            https://www.dropwizard.io/en/latest/manual/testing.html
+            -->
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-testing</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/junit-team/junit5/tree/main/junit-jupiter-engine -->
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/junit-team/junit5/tree/main/junit-jupiter-api -->
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/junit-team/junit5/tree/main/junit-jupiter-params -->
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/junit-team/junit5/tree/main/junit-platform-suite -->
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-suite</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/mockito/mockito -->
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/mockito/mockito -->
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/cucumber/cucumber-jvm/tree/main/cucumber-junit -->
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!--
+            https://github.com/cucumber/cucumber-expressions
+            https://cucumber.github.io/try-cucumber-expressions/
+            -->
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-expressions</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/cucumber/cucumber-jvm/tree/main/cucumber-core -->
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/cucumber/cucumber-jvm/tree/main/cucumber-java -->
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-java</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/cucumber/cucumber-jvm/tree/main/cucumber-junit-platform-engine -->
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-junit-platform-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.jayway.jsonpath</groupId>
+      <artifactId>json-path</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <filtering>false</filtering>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <filtering>false</filtering>
+        <directory>src/test/resources</directory>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <!-- https://github.com/diffplug/spotless/tree/main/plugin-maven -->
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- https://maven.apache.org/plugins/maven-jar-plugin/ -->
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <!-- Test utils are reused in other layers. -->
+            <id>test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- https://maven.apache.org/plugins/maven-compiler-plugin/ -->
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- https://www.mojohaus.org/properties-maven-plugin/ -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- https://maven.apache.org/surefire/maven-surefire-plugin/ -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <runOrder>random</runOrder>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-test</id>
+            <configuration>
+              <failIfNoTests>true</failIfNoTests>
+              <includes>
+                <include>**/*Test.java</include>
+              </includes>
+              <excludes>
+                <exclude>**/*ComponentSuite.java</exclude>
+              </excludes>
+              <reportsDirectory>${project.build.directory}/unit-tests</reportsDirectory>
+              <parallel>both</parallel>
+              <threadCount>4</threadCount>
+              <perCoreThreadCount>false</perCoreThreadCount>
+              <environmentVariables>
+                <!-- Needed by codingchica.demo.test.dropwizard.config.ConfigurationFileValidationTest -->
+                <LOG_LEVEL_MAIN>DEBUG</LOG_LEVEL_MAIN>
+              </environmentVariables>
+            </configuration>
+          </execution>
+          <execution>
+            <id>component-tests</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <phase>integration-test</phase>
+            <configuration>
+              <properties>
+                <!--
+                When adding a new property here, suggest keeping src/test/resources/cucumber.properties in sync.
+                These properties values are loaded from that file during the Maven build.
+                -->
+                <configurationParameters>cucumber.junit-platform.naming-strategy=${cucumber.junit-platform.naming-strategy}
+                  cucumber.execution.dry-run=${cucumber.execution.dry-run}
+                  cucumber.junit-platform.naming-strategy=${cucumber.junit-platform.naming-strategy}
+                  cucumber.plugin=${cucumber.plugin}
+                  cucumber.publish.enabled=${cucumber.publish.enabled}
+                  cucumber.publish.quiet=${cucumber.publish.quiet}</configurationParameters>
+              </properties>
+              <systemPropertyVariables>
+                <project.artifactId>${project.artifactId}</project.artifactId>
+                <project.version>${project.version}</project.version>
+              </systemPropertyVariables>
+              <includes>
+                <include>**/*ComponentSuite.java</include>
+              </includes>
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              <reportsDirectory>${project.build.directory}/component-tests</reportsDirectory>
+              <excludes>
+                <exclude>**/*Test.java</exclude>
+              </excludes>
+              <parallel>both</parallel>
+              <threadCount>4</threadCount>
+              <perCoreThreadCount>false</perCoreThreadCount>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <!-- https://maven.apache.org/plugins/maven-source-plugin/ -->
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- https://maven.apache.org/plugins/maven-javadoc-plugin/ -->
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${maven.javadoc.plugin.version}</version>
+      </plugin>
+      <plugin>
+        <!-- https://maven.apache.org/plugins/maven-checkstyle-plugin/ -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <!-- https://maven.apache.org/enforcer/maven-enforcer-plugin/ -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>${maven.enforcer.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>enforce-dependency-convergence</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <dependencyConvergence/>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!--
+        https://www.eclemma.org/jacoco/trunk/doc/maven.html
+        https://www.eclemma.org/jacoco/trunk/doc/integrations.html
+        -->
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-agent-ut</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-ut/jacoco-ut.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>prepare-agent-component</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <phase>pre-integration-test</phase>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-component/jacoco-component.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-ut</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>test</phase>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-ut/jacoco-ut.exec</dataFile>
+              <outputDirectory>${project.build.directory}/ut-coverage-reports</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-component</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>post-integration-test</phase>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-component/jacoco-component.exec</dataFile>
+              <outputDirectory>${project.build.directory}/component-coverage-reports</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>jacoco-check-ut</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-ut/jacoco-ut.exec</dataFile>
+              <rules>
+                <rule>
+                  <!-- https://www.eclemma.org/jacoco/trunk/doc/api/org/jacoco/core/analysis/IClassCoverage.html -->
+                  <element>CLASS</element>
+                  <limits>
+                    <!-- https://www.eclemma.org/jacoco/trunk/doc/counters.html -->
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.90</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.90</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>jacoco-check-component</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-component/jacoco-component.exec</dataFile>
+              <rules>
+                <rule>
+                  <!-- https://www.eclemma.org/jacoco/trunk/doc/api/org/jacoco/core/analysis/IBundleCoverage.html -->
+                  <element>BUNDLE</element>
+                  <limits>
+                    <!-- https://www.eclemma.org/jacoco/trunk/doc/counters.html -->
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.90</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.90</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
