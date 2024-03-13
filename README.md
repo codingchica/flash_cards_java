@@ -1,4 +1,5 @@
 # Flash Cards Java
+[![Java CI with Maven](https://github.com/codingchica/flash_cards_java/actions/workflows/maven.yml/badge.svg)](https://github.com/codingchica/flash_cards_java/actions/workflows/maven.yml)
 
 ## How to start the flash_cards_java application
 ---
