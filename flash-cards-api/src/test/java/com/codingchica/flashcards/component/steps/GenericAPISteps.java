@@ -24,8 +24,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 
 /** Cucumber steps that can be used for generic API calls to the Dropwizard server. */
@@ -189,6 +191,52 @@ public class GenericAPISteps {
         "Expected response body to not be null, but it was.  Here is the error body: "
             + actualResponseBody);
     assertEquals(responseBody, actualResponseBody, "mismatch mismatch calling " + world.endpoint);
+  }
+
+  @Then("the response body contains UUID at path\\(s)")
+  public void theResponseBodyContainsUUIDPaths(List<String> paths) throws IOException {
+    String responseBody = getResponseEntity();
+    assertNotNull(
+        responseBody,
+        "Expected response body to not be null, but it was.  Here is the error body: "
+            + responseBody);
+    DocumentContext jsonBody = JsonPath.parse(responseBody);
+    assertNotNull(paths, "paths");
+    assertNotNull(responseBody, "responseBody");
+    paths.forEach(
+        (path) -> {
+          try {
+            assertNotNull(
+                UUID.fromString(jsonBody.read(path).toString()),
+                "Mismatch on '" + path + "' in response = " + responseBody);
+          } catch (Throwable t) {
+            System.out.println("Actual Response: " + responseBody);
+            throw t;
+          }
+        });
+  }
+
+  @Then("the response body contains Instant at path\\(s)")
+  public void theResponseBodyContainsInstantPaths(List<String> dateTimePaths) throws IOException {
+    String responseBody = getResponseEntity();
+    assertNotNull(
+        responseBody,
+        "Expected response body to not be null, but it was.  Here is the error body: "
+            + responseBody);
+    DocumentContext jsonBody = JsonPath.parse(responseBody);
+    assertNotNull(dateTimePaths, "expectedResponseData");
+    assertNotNull(responseBody, "responseBody");
+    dateTimePaths.forEach(
+        (path) -> {
+          try {
+            assertNotNull(
+                Instant.parse(jsonBody.read(path).toString()),
+                "Mismatch on '" + path + "' in response = " + responseBody);
+          } catch (Throwable t) {
+            System.out.println("Actual Response: " + responseBody);
+            throw t;
+          }
+        });
   }
 
   @Then("the response body contains JSON data")

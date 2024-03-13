@@ -39,49 +39,19 @@ class QuizResourceTest {
     @Test
     void whenQuizzesNull_thenEmptyListReturned() {
       // Setup
-      doReturn(null).when(quizService).listQuizzes();
+      doReturn(null).when(quizService).listQuizNames();
 
       // Execution
       List<String> quizNames = quizResource.listQuizzes();
 
       // Validation
-      assertSame(Collections.EMPTY_LIST, quizNames);
+      assertNull(quizNames);
     }
 
     @Test
     void whenQuizzesEmpty_thenEmptyListReturned() {
       // Setup
-      doReturn(Collections.EMPTY_LIST).when(quizService).listQuizzes();
-
-      // Execution
-      List<String> quizNames = quizResource.listQuizzes();
-
-      // Validation
-      assertEquals(Collections.EMPTY_LIST, quizNames);
-    }
-
-    @Test
-    void whenQuizzesContainsNulls_thenIgnored() {
-      // Setup
-      quizzes.add(null);
-      quizzes.add(null);
-      doReturn(quizzes).when(quizService).listQuizzes();
-
-      // Execution
-      List<String> quizNames = quizResource.listQuizzes();
-
-      // Validation
-      assertEquals(Collections.EMPTY_LIST, quizNames);
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" "})
-    void whenQuizzesContainsBlankNames_thenIgnored(String name) {
-      // Setup
-      quiz = quizBuilder.name(name).build();
-      quizzes.add(quiz);
-      doReturn(quizzes).when(quizService).listQuizzes();
+      doReturn(Collections.EMPTY_LIST).when(quizService).listQuizNames();
 
       // Execution
       List<String> quizNames = quizResource.listQuizzes();
@@ -96,15 +66,14 @@ class QuizResourceTest {
       String name1 = quiz.getName();
       String name2 = "quizName2";
       String[] expectedNames = {name1, name2};
-      quizzes.add(quiz);
-      quizzes.add(quizBuilder.name(name2).build());
-      doReturn(quizzes).when(quizService).listQuizzes();
+      List<String> expectedNamesList = Arrays.asList(expectedNames);
+      doReturn(expectedNamesList).when(quizService).listQuizNames();
 
       // Execution
       List<String> quizNames = quizResource.listQuizzes();
 
       // Validation
-      assertEquals(Arrays.asList(expectedNames), quizNames);
+      assertEquals(expectedNamesList, quizNames);
     }
   }
 

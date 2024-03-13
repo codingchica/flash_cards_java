@@ -7,15 +7,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
 /** The Web service entry point into the application for CRUD operations involving quizzes. */
@@ -34,17 +30,7 @@ public class QuizResource {
    */
   @GET
   public List<String> listQuizzes() {
-    List<Quiz> quizzes = quizService.listQuizzes();
-    List<String> quizNames = Collections.EMPTY_LIST;
-    if (quizzes != null) {
-      quizNames =
-          quizzes.stream()
-              .filter(Objects::nonNull)
-              .filter(quiz -> StringUtils.isNotBlank(quiz.getName()))
-              .map(Quiz::getName)
-              .collect(Collectors.toList());
-    }
-    return quizNames;
+    return quizService.listQuizNames();
   }
 
   /**

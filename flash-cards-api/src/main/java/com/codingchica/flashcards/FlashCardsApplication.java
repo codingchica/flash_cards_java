@@ -55,7 +55,7 @@ public class FlashCardsApplication extends Application<FlashCardsConfiguration> 
    * @return A QuizMapper instance.
    */
   public QuizMapper quizMapper() {
-    return new QuizMapperImpl();
+    return QuizMapperImpl.builder().build();
   }
 
   /**
@@ -77,7 +77,6 @@ public class FlashCardsApplication extends Application<FlashCardsConfiguration> 
     return QuizService.builder()
         .flashCardsConfiguration(configuration)
         .quizMapper(quizMapper())
-        .uuidGenerator(uuidGenerator())
         .build();
   }
 

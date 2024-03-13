@@ -11,7 +11,6 @@ server:
     port: 0
 flashCardGroupMap:
   Adding By 00:
-    maximumPrompts: 12
     maxDuration: "PT30S"
     prompts:
       "0+0": 0

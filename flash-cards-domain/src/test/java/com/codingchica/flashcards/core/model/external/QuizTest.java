@@ -2,10 +2,8 @@ package com.codingchica.flashcards.core.model.external;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.ZonedDateTime;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,15 +57,16 @@ class QuizTest {
     @Test
     void whenSetInBuilder_thenSameReturnedInGetter() {
       // Setup
-      ZonedDateTime zonedDateTime = ZonedDateTime.now();
-      quizBuilder.dueDateTime(zonedDateTime);
+      Instant zonedDateTime = Instant.now();
+      String timeString = zonedDateTime.toString();
+      quizBuilder.dueDateTime(timeString);
 
       // Execution
       Quiz quiz = quizBuilder.build();
 
       // Validation
       assertNotNull(quiz);
-      assertSame(zonedDateTime, quiz.getDueDateTime());
+      assertSame(timeString, quiz.getDueDateTime());
     }
   }
 
@@ -76,7 +75,7 @@ class QuizTest {
     @Test
     void whenSetInBuilder_thenSameReturnedInGetter() {
       // Setup
-      Map<String, String> prompts = new TreeMap<>();
+      List<Map.Entry<String, String>> prompts = new ArrayList<>();
       quizBuilder.prompts(prompts);
 
       // Execution

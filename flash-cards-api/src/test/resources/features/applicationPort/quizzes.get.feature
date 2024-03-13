@@ -62,30 +62,35 @@ Feature: Quiz - Get
       And that my request goes to endpoint quizzes/Adding%20By%2000
       When I submit the request
       Then the response code is 200
+      And the response body contains UUID at path(s)
+        | id |
+      And the response body contains Instant at path(s)
+        | dueDateTime |
       And the response body contains JSON data
-        | name            | Adding By 00 |
-        | prompts["0+0"]  | 0            |
-        | prompts["0+1"]  | 1            |
-        | prompts["0+10"] | 10           |
-        | prompts["0+11"] | 11           |
-        | prompts["0+12"] | 12           |
-        | prompts["0+2"]  | 2            |
-        | prompts["0+3"]  | 3            |
-        | prompts["0+4"]  | 4            |
-        | prompts["0+5"]  | 5            |
-        | prompts["0+6"]  | 6            |
-        | prompts["0+7"]  | 7            |
-        | prompts["0+8"]  | 8            |
-        | prompts["0+9"]  | 9            |
-        | prompts["1+0"]  | 1            |
-        | prompts["10+0"] | 10           |
-        | prompts["11+0"] | 11           |
-        | prompts["12+0"] | 12           |
-        | prompts["2+0"]  | 2            |
-        | prompts["3+0"]  | 3            |
-        | prompts["4+0"]  | 4            |
-        | prompts["5+0"]  | 5            |
-        | prompts["6+0"]  | 6            |
-        | prompts["7+0"]  | 7            |
-        | prompts["8+0"]  | 8            |
-        | prompts["9+0"]  | 9            |
+      # One copy of each expected response, as we aren't limiting by min or max
+        | name               | Adding By 00 |
+        | prompts[*]["0+0"]  | ["0"]        |
+        | prompts[*]["0+1"]  | ["1"]        |
+        | prompts[*]["0+10"] | ["10"]       |
+        | prompts[*]["0+11"] | ["11"]       |
+        | prompts[*]["0+12"] | ["12"]       |
+        | prompts[*]["0+2"]  | ["2"]        |
+        | prompts[*]["0+3"]  | ["3"]        |
+        | prompts[*]["0+4"]  | ["4"]        |
+        | prompts[*]["0+5"]  | ["5"]        |
+        | prompts[*]["0+6"]  | ["6"]        |
+        | prompts[*]["0+7"]  | ["7"]        |
+        | prompts[*]["0+8"]  | ["8"]        |
+        | prompts[*]["0+9"]  | ["9"]        |
+        | prompts[*]["1+0"]  | ["1"]        |
+        | prompts[*]["10+0"] | ["10"]       |
+        | prompts[*]["11+0"] | ["11"]       |
+        | prompts[*]["12+0"] | ["12"]       |
+        | prompts[*]["2+0"]  | ["2"]        |
+        | prompts[*]["3+0"]  | ["3"]        |
+        | prompts[*]["4+0"]  | ["4"]        |
+        | prompts[*]["5+0"]  | ["5"]        |
+        | prompts[*]["6+0"]  | ["6"]        |
+        | prompts[*]["7+0"]  | ["7"]        |
+        | prompts[*]["8+0"]  | ["8"]        |
+        | prompts[*]["9+0"]  | ["9"]        |

@@ -8,37 +8,38 @@ import com.codingchica.flashcards.core.config.FlashCardsConfiguration;
 import com.codingchica.flashcards.core.mappers.QuizMapper;
 import com.codingchica.flashcards.core.mappers.QuizMapperImpl;
 import com.codingchica.flashcards.core.model.external.Quiz;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
-import org.mockito.Mockito;
 
 class QuizServiceTest {
-  private QuizMapper quizMapper = spy(new QuizMapperImpl());
-  private FlashCardsConfiguration flashCardsConfiguration = mock(FlashCardsConfiguration.class);
   private String flashCardGroupKey1 = "some key value here";
-  private FlashCardGroup flashCardGroupValue1 = mock(FlashCardGroup.class);
   private String flashCardGroupKey2 = "some OTHER key value here";
-  private FlashCardGroup flashCardGroupValue2 = mock(FlashCardGroup.class);
+  private FlashCardsConfiguration flashCardsConfiguration = mock(FlashCardsConfiguration.class);
   private Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
-  private UUID uuid = UUID.randomUUID();
-  private ZonedDateTime dueDateTime = ZonedDateTime.now().plus(Duration.ofSeconds(60));
+  private Map<String, String> prompts = new HashMap<>();
+  private FlashCardGroup flashCardGroupValue1 =
+      spy(FlashCardGroup.builder().prompts(prompts).build());
+  private FlashCardGroup flashCardGroupValue2 = mock(FlashCardGroup.class);
+  private QuizMapper quizMapper = spy(QuizMapperImpl.builder().build());
   private QuizService.Builder quizServiceBuilder =
-      QuizService.builder()
-          .quizMapper(quizMapper)
-          .flashCardsConfiguration(flashCardsConfiguration)
-          .uuidGenerator(new ObjectIdGenerators.UUIDGenerator());
+      QuizService.builder().quizMapper(quizMapper).flashCardsConfiguration(flashCardsConfiguration);
 
   private QuizService quizService = quizServiceBuilder.build();
 
   @BeforeEach
   public void setup() {
+    prompts.put("promptKey1", "promptValue1");
+
     flashCardGroupMap.put(flashCardGroupKey1, flashCardGroupValue1);
+
     doReturn(flashCardGroupMap).when(flashCardsConfiguration).getFlashCardGroupMap();
   }
 
@@ -60,7 +61,7 @@ class QuizServiceTest {
       @Test
       void build_whenFlashCardsConfigurationNotInvoked_thenExceptionThrown() {
         // Setup
-        quizServiceBuilder = QuizService.builder().quizMapper(quizMapper);
+        quizServiceBuilder = QuizService.builder();
 
         // Execution
         Executable executable = () -> quizServiceBuilder.build();
@@ -98,36 +99,6 @@ class QuizServiceTest {
       }
     }
 
-    @Nested
-    class UUIDGeneratorTest {
-
-      @Test
-      void build_whenUUIDGeneratorNotInvoked_thenExceptionThrown() {
-        // Setup
-        quizServiceBuilder =
-            QuizService.builder()
-                .flashCardsConfiguration(flashCardsConfiguration)
-                .quizMapper(quizMapper);
-
-        // Execution
-        Executable executable = () -> quizServiceBuilder.build();
-
-        // Validation
-        Exception exception = assertThrows(NullPointerException.class, executable);
-        assertEquals("uuidGenerator is marked non-null but is null", exception.getMessage());
-      }
-
-      @Test
-      void builderSetter_whenUuidGeneratorNull_thenExceptionThrown() {
-        // Execution
-        Executable executable = () -> quizServiceBuilder.uuidGenerator(null);
-
-        // Validation
-        Exception exception = assertThrows(NullPointerException.class, executable);
-        assertEquals("uuidGenerator is marked non-null but is null", exception.getMessage());
-      }
-    }
-
     @Test
     void build_whenInvoked_thenExpectedObjectReturned() {
       // Execution
@@ -147,9 +118,7 @@ class QuizServiceTest {
       String result = quizServiceBuilder.toString();
 
       // Validation
-      assertEquals(
-          "QuizService.Builder(flashCardsConfiguration=null, quizMapper=null, uuidGenerator=null)",
-          result);
+      assertEquals("QuizService.Builder(flashCardsConfiguration=null, quizMapper=null)", result);
     }
   }
 
@@ -161,7 +130,7 @@ class QuizServiceTest {
       doReturn(null).when(flashCardsConfiguration).getFlashCardGroupMap();
 
       // Execution
-      Executable executable = () -> quizService.listQuizzes();
+      Executable executable = () -> quizService.listQuizNames();
 
       // Validation
       Exception exception = assertThrows(NullPointerException.class, executable);
@@ -174,7 +143,7 @@ class QuizServiceTest {
       flashCardGroupMap.clear();
 
       // Execution
-      List<Quiz> result = quizService.listQuizzes();
+      List<String> result = quizService.listQuizNames();
 
       // Validation
       assertNotNull(result);
@@ -188,7 +157,7 @@ class QuizServiceTest {
       flashCardGroupMap.put(null, flashCardGroupValue1);
 
       // Execution
-      List<Quiz> result = quizService.listQuizzes();
+      List<String> result = quizService.listQuizNames();
 
       // Validation
       assertNotNull(result);
@@ -202,7 +171,7 @@ class QuizServiceTest {
       flashCardGroupMap.put("some key value", null);
 
       // Execution
-      List<Quiz> result = quizService.listQuizzes();
+      List<String> result = quizService.listQuizNames();
 
       // Validation
       assertNotNull(result);
@@ -212,27 +181,21 @@ class QuizServiceTest {
     @Test
     void listQuizzes_whenFlashCardsGroupMapContainsOneEntry_thenMappedValueReturned() {
       // Setup
+      ZonedDateTime now = ZonedDateTime.now();
+      ZonedDateTime upperLimit = ZonedDateTime.now().plus(Duration.ofMinutes(1));
       assertEquals(1, flashCardGroupMap.size(), "flashCardGroupMap.size()" + flashCardGroupMap);
       assertSame(flashCardGroupValue1, flashCardGroupMap.get(flashCardGroupKey1));
 
       // Execution
-      List<Quiz> quizList = quizService.listQuizzes();
+      List<String> quizList = quizService.listQuizNames();
 
       // Validation
       assertNotNull(quizList);
       assertFalse(quizList.isEmpty());
       assertEquals(1, quizList.size());
 
-      Quiz quiz = quizList.get(0);
-      assertNotNull(quiz);
-      assertEquals(flashCardGroupKey1, quiz.getName());
-
-      verify(quizMapper)
-          .internalToExternalQuizMapping(
-              eq(flashCardGroupKey1),
-              eq(flashCardGroupValue1),
-              any(UUID.class),
-              any(ZonedDateTime.class));
+      String quiz = quizList.get(0);
+      assertEquals(flashCardGroupKey1, quiz);
     }
 
     @Test
@@ -245,25 +208,14 @@ class QuizServiceTest {
       assertSame(flashCardGroupValue1, flashCardGroupMap.get(flashCardGroupKey1));
 
       // Execution
-      List<Quiz> quizList = quizService.listQuizzes();
+      List<String> quizList = quizService.listQuizNames();
 
       // Validation
       assertNotNull(quizList);
       assertFalse(quizList.isEmpty());
       assertEquals(expectedSize, quizList.size());
 
-      verify(quizMapper)
-          .internalToExternalQuizMapping(
-              eq(flashCardGroupKey1),
-              eq(flashCardGroupValue1),
-              any(UUID.class),
-              any(ZonedDateTime.class));
-      verify(quizMapper)
-          .internalToExternalQuizMapping(
-              eq(flashCardGroupKey2),
-              eq(flashCardGroupValue2),
-              any(UUID.class),
-              any(ZonedDateTime.class));
+      verifyNoInteractions(quizMapper);
     }
 
     @Test
@@ -273,20 +225,14 @@ class QuizServiceTest {
       assertEquals(
           expectedSize, flashCardGroupMap.size(), "flashCardGroupMap.size()" + flashCardGroupMap);
       assertSame(flashCardGroupValue1, flashCardGroupMap.get(flashCardGroupKey1));
-      List<Quiz> initialResult = quizService.listQuizzes();
-      Mockito.reset(quizMapper);
+      List<String> initialResult = quizService.listQuizNames();
 
       // Execution
-      List<Quiz> quizList = quizService.listQuizzes();
+      List<String> quizList = quizService.listQuizNames();
 
       // Validation
-      assertEquals(initialResult.get(0).getName(), quizList.get(0).getName());
-      verify(quizMapper)
-          .internalToExternalQuizMapping(
-              eq(flashCardGroupKey1),
-              eq(flashCardGroupValue1),
-              any(UUID.class),
-              any(ZonedDateTime.class));
+      assertEquals(initialResult.get(0), quizList.get(0));
+      verifyNoInteractions(quizMapper);
     }
   }
 
@@ -307,9 +253,7 @@ class QuizServiceTest {
     @Test
     void getQuiz_whenQuizNull_thenIgnored() {
       // Setup
-      doReturn(null)
-          .when(quizMapper)
-          .internalToExternalQuizMapping(anyString(), any(), any(), any());
+      doReturn(null).when(quizMapper).internalToExternalQuizMapping(anyString(), any());
 
       // Execution
       Optional<Quiz> optionalQuiz = quizService.getQuiz(flashCardGroupKey1);
@@ -332,6 +276,7 @@ class QuizServiceTest {
     @Test
     void getQuiz_whenQuizNameMatch_thenReturned() {
       // Setup
+      assertFalse(flashCardGroupValue1.getPrompts().isEmpty());
 
       // Execution
       Optional<Quiz> optionalQuiz = quizService.getQuiz(flashCardGroupKey1);
@@ -342,11 +287,14 @@ class QuizServiceTest {
 
       assertNotNull(quiz);
       assertEquals(flashCardGroupKey1, quiz.getName());
+      verify(quizMapper).internalToExternalQuizMapping(flashCardGroupKey1, flashCardGroupValue1);
+      verifyNoMoreInteractions(quizMapper);
     }
 
     @Test
     void getQuiz_whenFlashCardsGroupMapContainsNullKey_thenIgnored() {
       // Setup
+      flashCardGroupMap.clear();
       flashCardGroupMap.put(null, flashCardGroupValue2);
 
       // Execution
@@ -354,13 +302,13 @@ class QuizServiceTest {
 
       // Validation
       assertNotNull(optionalQuiz);
-      assertTrue(optionalQuiz.isPresent());
-      assertEquals(flashCardGroupKey1, optionalQuiz.get().getName());
+      assertTrue(optionalQuiz.isEmpty());
     }
 
     @Test
     void getQuiz_whenFlashCardsGroupMapContainsNullValue_thenIgnored() {
       // Setup
+      flashCardGroupMap.clear();
       flashCardGroupMap.put("some key value", null);
 
       // Execution
@@ -368,8 +316,7 @@ class QuizServiceTest {
 
       // Validation
       assertNotNull(optionalQuiz);
-      assertTrue(optionalQuiz.isPresent());
-      assertEquals(flashCardGroupKey1, optionalQuiz.get().getName());
+      assertTrue(optionalQuiz.isEmpty());
     }
   }
 }
