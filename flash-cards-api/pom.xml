@@ -331,7 +331,7 @@
                 <exclude>**/*Test.java</exclude>
               </excludes>
               <parallel>both</parallel>
-              <threadCount>4</threadCount>
+              <threadCount>1</threadCount>
               <perCoreThreadCount>false</perCoreThreadCount>
               <redirectTestOutputToFile>false</redirectTestOutputToFile>
             </configuration>
