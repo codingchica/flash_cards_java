@@ -195,7 +195,12 @@ public class GenericCLISteps {
 
   @Then("the cli exit code is {int}")
   public void confirmExitCode(int expectedCode) {
-    assertEquals(expectedCode, world.exitCode, "Exit code:  " + world.outputLines);
+    assertEquals(
+        expectedCode,
+        world.exitCode,
+        String.format(
+            "Exit code: %s%n%n...with errors%n%s%n%n...with output:%n%s",
+            world.exitCode, world.errorOutputLines, world.outputLines));
   }
 
   private boolean containsFullLineMatch(String expectedOutput, List<String> actualOutput) {
