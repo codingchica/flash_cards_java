@@ -1,4 +1,4 @@
-package com.codingchica.flashcards.core.mappers;
+package com.codingchica.flashcards.core.mappers.external;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,8 +6,6 @@ import com.codingchica.flashcards.core.config.ConfigFactory;
 import com.codingchica.flashcards.core.config.FlashCardGroup;
 import com.codingchica.flashcards.core.model.external.Quiz;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
@@ -18,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class QuizMapperImplTest {
@@ -86,7 +83,7 @@ class QuizMapperImplTest {
       // Setup
 
       // Execution
-      Executable executable = () -> quizMapper.internalToExternalQuizMapping(name, null);
+      Executable executable = () -> quizMapper.internalToExternalQuizMapping(null);
 
       // Validation
       Exception exception = assertThrows(NullPointerException.class, executable);
@@ -101,80 +98,11 @@ class QuizMapperImplTest {
         // Setup
 
         // Execution
-        Quiz quiz = quizMapper.internalToExternalQuizMapping(name, flashCardGroup);
+        Quiz quiz = quizMapper.internalToExternalQuizMapping(flashCardGroup);
 
         // Validation
         assertNotNull(quiz);
         assertNotNull(quiz.getId());
-      }
-    }
-
-    @Nested
-    class NameTest {
-
-      @Test
-      void whenNameNull_thenExceptionReturned() {
-        // Setup
-
-        // Execution
-        Executable executable =
-            () -> quizMapper.internalToExternalQuizMapping(null, flashCardGroup);
-
-        // Validation
-        Exception exception = assertThrows(NullPointerException.class, executable);
-        assertEquals("name is marked non-null but is null", exception.getMessage());
-      }
-
-      @ParameterizedTest
-      @EmptySource
-      @ValueSource(strings = {"name 1", "Name 2"})
-      void whenNamePopulated_thenSamePopulated(String name) {
-        // Setup
-
-        // Execution
-        Quiz quiz = quizMapper.internalToExternalQuizMapping(name, flashCardGroup);
-
-        // Validation
-        assertNotNull(quiz);
-        assertEquals(name, quiz.getName());
-      }
-    }
-
-    @Nested
-    class DueDateTimeTest {
-      @Test
-      void whenMaxDurationNull_thenDueDateTimeNull() {
-        // Setup
-        flashCardGroup = flashCardGroupBuilder.maxDuration(null).build();
-
-        // Execution
-        Quiz quiz = quizMapper.internalToExternalQuizMapping(name, flashCardGroup);
-
-        // Validation
-        assertNotNull(quiz);
-        assertNull(quiz.getDueDateTime());
-      }
-
-      @ParameterizedTest
-      @ValueSource(ints = {0, 5, 11})
-      void whenMaxDurationPopulated_thenExpectedDueDateTimePopulated(
-          int timeToCompleteQuizSeconds) {
-        // Setup
-        Duration durationToComplete = Duration.ofSeconds(timeToCompleteQuizSeconds);
-        Duration buffer = Duration.ofSeconds(10);
-        Instant now = Instant.now().minus(Duration.ofSeconds(1));
-        Instant max = Instant.now().plus(durationToComplete).plus(buffer);
-        flashCardGroup = flashCardGroupBuilder.maxDuration(durationToComplete).build();
-
-        // Execution
-        Quiz quiz = quizMapper.internalToExternalQuizMapping(name, flashCardGroup);
-
-        // Validation
-        assertNotNull(quiz);
-        assertNotNull(quiz.getDueDateTime());
-        Instant dueDate = Instant.parse(quiz.getDueDateTime());
-        assertTrue(now.isBefore(dueDate));
-        assertTrue(max.isAfter(dueDate));
       }
     }
 
@@ -187,8 +115,7 @@ class QuizMapperImplTest {
         assertNull(flashCardGroup.getPrompts());
 
         // Execution
-        Executable executable =
-            () -> quizMapper.internalToExternalQuizMapping(name, flashCardGroup);
+        Executable executable = () -> quizMapper.internalToExternalQuizMapping(flashCardGroup);
 
         // Validation
         Exception exception = assertThrows(NullPointerException.class, executable);
@@ -231,7 +158,7 @@ class QuizMapperImplTest {
         assertEquals(promptsCount, flashCardGroup.getPrompts().size());
 
         // Execution
-        Quiz quiz = quizMapper.internalToExternalQuizMapping(name, flashCardGroup);
+        Quiz quiz = quizMapper.internalToExternalQuizMapping(flashCardGroup);
 
         // Validation
         assertNotNull(quiz);
@@ -280,11 +207,10 @@ class QuizMapperImplTest {
         // Setup
 
         // Execution
-        Executable executable = () -> quizMapperBuilder.uuidGenerator(null);
+        QuizMapperImpl.Builder result = quizMapperBuilder.uuidGenerator(null);
 
         // Validation
-        Exception exception = assertThrows(NullPointerException.class, executable);
-        assertEquals("uuidGenerator is marked non-null but is null", exception.getMessage());
+        assertNotNull(result);
       }
 
       @Test
@@ -322,11 +248,10 @@ class QuizMapperImplTest {
         // Setup
 
         // Execution
-        Executable executable = () -> quizMapperBuilder.random(null);
+        QuizMapperImpl.Builder result = quizMapperBuilder.random(null);
 
         // Validation
-        Exception exception = assertThrows(NullPointerException.class, executable);
-        assertEquals("random is marked non-null but is null", exception.getMessage());
+        assertNotNull(result);
       }
 
       @Test

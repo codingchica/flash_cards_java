@@ -1,12 +1,16 @@
 package com.codingchica.flashcards.api.resources;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import com.codingchica.flashcards.core.exceptions.RenderableException;
+import com.codingchica.flashcards.core.model.external.CompletedQuiz;
 import com.codingchica.flashcards.core.model.external.Quiz;
+import com.codingchica.flashcards.core.model.external.QuizResult;
 import com.codingchica.flashcards.service.QuizService;
+import java.io.IOException;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -24,6 +28,9 @@ class QuizResourceTest {
   private List<Quiz> quizzes = new ArrayList<>();
   private Quiz.Builder quizBuilder = Quiz.builder().name("Quiz name");
   private Quiz quiz = quizBuilder.build();
+  private CompletedQuiz.Builder completedQuizBuilder = CompletedQuiz.builder();
+  private CompletedQuiz completedQuiz = completedQuizBuilder.build();
+  private QuizResult quizResult = QuizResult.builder().build();
   @Mock private QuizService quizService;
   private QuizResource.Builder quizResourceBuilder = QuizResource.builder();
   private QuizResource quizResource;
@@ -39,10 +46,10 @@ class QuizResourceTest {
     @Test
     void whenQuizzesNull_thenEmptyListReturned() {
       // Setup
-      doReturn(null).when(quizService).listQuizNames();
+      doReturn(null).when(quizService).listQuizNamesByCategory();
 
       // Execution
-      List<String> quizNames = quizResource.listQuizzes();
+      Map<String, List<String>> quizNames = quizResource.listQuizzes();
 
       // Validation
       assertNull(quizNames);
@@ -51,13 +58,13 @@ class QuizResourceTest {
     @Test
     void whenQuizzesEmpty_thenEmptyListReturned() {
       // Setup
-      doReturn(Collections.EMPTY_LIST).when(quizService).listQuizNames();
+      doReturn(Collections.EMPTY_MAP).when(quizService).listQuizNamesByCategory();
 
       // Execution
-      List<String> quizNames = quizResource.listQuizzes();
+      Map<String, List<String>> quizNames = quizResource.listQuizzes();
 
       // Validation
-      assertEquals(Collections.EMPTY_LIST, quizNames);
+      assertEquals(Collections.EMPTY_MAP, quizNames);
     }
 
     @Test
@@ -66,14 +73,14 @@ class QuizResourceTest {
       String name1 = quiz.getName();
       String name2 = "quizName2";
       String[] expectedNames = {name1, name2};
-      List<String> expectedNamesList = Arrays.asList(expectedNames);
-      doReturn(expectedNamesList).when(quizService).listQuizNames();
+      Map<String, List<String>> expectedNamesMap = new HashMap<>();
+      doReturn(expectedNamesMap).when(quizService).listQuizNamesByCategory();
 
       // Execution
-      List<String> quizNames = quizResource.listQuizzes();
+      Map<String, List<String>> quizNames = quizResource.listQuizzes();
 
       // Validation
-      assertEquals(expectedNamesList, quizNames);
+      assertEquals(expectedNamesMap, quizNames);
     }
   }
 
@@ -108,6 +115,24 @@ class QuizResourceTest {
       RenderableException exception = assertThrows(RenderableException.class, executable);
       assertEquals(
           String.format("No match found for quiz: '%s'", quiz.getName()), exception.getMessage());
+    }
+  }
+
+  @Nested
+  class GradeQuizTest {
+
+    @Test
+    void whenInvoked_thenSamePassedToQuizService() throws RenderableException, IOException {
+      // Setup
+      UUID uuid = UUID.randomUUID();
+      doReturn(quizResult).when(quizService).gradeQuiz(uuid, completedQuiz);
+
+      // Execution
+      QuizResult result = quizResource.gradeQuiz(uuid, completedQuiz);
+
+      // Validation
+      assertSame(quizResult, result);
+      verify(quizService).gradeQuiz(eq(uuid), eq(completedQuiz));
     }
   }
 

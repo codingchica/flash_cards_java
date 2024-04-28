@@ -5,34 +5,39 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.codingchica.flashcards.FlashCardsApplication;
 import com.codingchica.flashcards.component.model.APICallWorld;
 import com.codingchica.flashcards.core.config.FlashCardsConfiguration;
+import com.codingchica.flashcards.core.model.external.CompletedQuiz;
+import com.codingchica.flashcards.core.model.external.Quiz;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import io.cucumber.core.options.CurlOption;
 import io.cucumber.java.AfterAll;
 import io.cucumber.java.BeforeAll;
 import io.cucumber.java.ParameterType;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.dropwizard.testing.ResourceHelpers;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.*;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 /** Cucumber steps that can be used for generic API calls to the Dropwizard server. */
+@Slf4j
 public class GenericAPISteps {
-
+  private ObjectMapper objectMapper = new ObjectMapper();
   private static DropwizardAppExtension<FlashCardsConfiguration> DROP_WIZARD_SERVER =
       new DropwizardAppExtension<>(
           FlashCardsApplication.class,
@@ -79,12 +84,67 @@ public class GenericAPISteps {
   @Given("that my request goes to endpoint {string}")
   @Given("that my request goes to endpoint {word}")
   public void setPath(String path) {
-    world.path = path;
+    world.path = replaceKeywords(path);
+  }
+
+  private String replaceKeywords(String value) {
+    String valueToUse = value;
+    if (world.id != null) {
+      valueToUse = StringUtils.replaceIgnoreCase(valueToUse, "{ID}", world.id.toString());
+    }
+    if (world.newId == null) {
+      world.newId = UUID.randomUUID();
+    }
+    valueToUse = StringUtils.replaceIgnoreCase(valueToUse, "{NEW_ID}", world.newId.toString());
+    return valueToUse;
   }
 
   @Given("that my request goes to the {portName} port")
   public void setPort(int portName) {
     world.port = portName;
+  }
+
+  @Given("that my request is for a valid quiz ID")
+  public void getQuizId() throws URISyntaxException, IOException {
+    objectMapper.configure(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION, true);
+
+    String endpoint =
+        String.format(
+            "%s://%s:%s/%s", world.protocol, world.server, world.port, "quizzes/Adding%200");
+    log.debug(endpoint);
+    URL url = new URI(endpoint).toURL();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod("GET");
+    connection.setDoOutput(true);
+
+    // Execution
+    connection.connect();
+    String responseBody = getResponseBody(connection);
+    log.debug(responseBody);
+
+    DocumentContext jsonBody = JsonPath.parse(responseBody);
+
+    world.quiz = objectMapper.readValue(responseBody, Quiz.class);
+    world.id = UUID.fromString(jsonBody.read("id").toString());
+  }
+
+  @And("that my request body is for quiz {string} with {int} correct answers")
+  public void thatMyRequestBodyIsForQuizAddingWithCorrectAnswersCountCorrectAnswers(
+      String quizName, int correctAnswerCount) throws JsonProcessingException {
+    Preconditions.checkNotNull(world.quiz, "world.quiz must not be null");
+    List<String> answers = new ArrayList<>();
+    int countOfCorrectAnswers = 0;
+    for (int i = 0; i < world.quiz.getPrompts().size(); i++) {
+      Map.Entry<String, String> prompt = world.quiz.getPrompts().get(i);
+      if (countOfCorrectAnswers < correctAnswerCount) {
+        answers.add(prompt.getValue());
+        countOfCorrectAnswers++;
+      } else {
+        answers.add(prompt.getValue() + "something extra");
+      }
+    }
+    CompletedQuiz completedQuiz = CompletedQuiz.builder().name(quizName).answers(answers).build();
+    world.requestBody = objectMapper.writeValueAsString(completedQuiz);
   }
 
   @Given("that my request contains header {word} = {word}")
@@ -97,26 +157,40 @@ public class GenericAPISteps {
     world.httpMethod = CurlOption.HttpMethod.valueOf(methodName);
   }
 
+  @Given("that my request body is {string}")
+  public void setRequestBody(String body) {
+    world.requestBody = body;
+  }
+
   @When("I submit the request")
   public void sendRequest() throws IOException, URISyntaxException {
     // Setup
     world.endpoint =
         String.format("%s://%s:%s/%s", world.protocol, world.server, world.port, world.path);
     world.url = new URI(world.endpoint).toURL();
-    System.out.printf("Calling %s - %s%n", world.httpMethod.name(), world.url);
+    log.debug("Calling {} - {}", world.httpMethod.name(), world.url);
     world.connection = (HttpURLConnection) world.url.openConnection();
-    System.out.println("Request headers: ");
+    log.debug("Request headers: ");
     world.requestHeaders.forEach(
         (header, value) -> {
           if (StringUtils.containsIgnoreCase(header, "Auth")) {
-            System.out.printf("   %s = <omitted>%n", header);
+            log.debug("   {} = <omitted>", header);
           } else {
-            System.out.printf("   %s = %s%n", header, value);
+            log.debug("   {} = {}", header, value);
           }
           world.connection.setRequestProperty(header, value);
         });
     world.connection.setRequestMethod(world.httpMethod.name());
     world.connection.setDoOutput(true);
+    if (world.requestBody != null) {
+      try (final OutputStream outputStream = world.connection.getOutputStream();
+          final OutputStreamWriter outputStreamWriter =
+              new OutputStreamWriter(outputStream, StandardCharsets.UTF_8.name())) {
+        outputStreamWriter.write(world.requestBody);
+        outputStreamWriter.flush();
+        log.debug(world.requestBody);
+      }
+    }
 
     // Execution
     world.connection.connect();
@@ -131,13 +205,13 @@ public class GenericAPISteps {
     return world.responseBody;
   }
 
-  private String getResponseBody() throws IOException {
+  private String getResponseBody(HttpURLConnection connection) throws IOException {
     String responseReceived = null;
     InputStream responseBodyStream = null;
     try {
-      responseBodyStream = world.connection.getInputStream();
+      responseBodyStream = connection.getInputStream();
     } catch (IOException e) {
-      System.out.println("Exception while retrieving response body: " + e.getMessage());
+      log.debug("Exception while retrieving response body: " + e.getMessage());
     }
     if (responseBodyStream != null) {
       try (BufferedReader br =
@@ -150,13 +224,19 @@ public class GenericAPISteps {
         responseReceived = response.toString();
       }
     }
-    world.responseBody = responseReceived;
     return responseReceived;
   }
 
-  private String getResponseError() throws IOException {
+  private String getResponseBody() throws IOException {
+    String responseBody = getResponseBody(world.connection);
+
+    world.responseBody = responseBody;
+    return responseBody;
+  }
+
+  private String getResponseError(HttpURLConnection connection) throws IOException {
     String responseReceived = null;
-    InputStream errorStream = world.connection.getErrorStream();
+    InputStream errorStream = connection.getErrorStream();
     if (errorStream != null) {
       try (BufferedReader br =
           new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8))) {
@@ -168,8 +248,13 @@ public class GenericAPISteps {
         responseReceived = response.toString();
       }
     }
-    world.responseBody = responseReceived;
     return responseReceived;
+  }
+
+  private String getResponseError() throws IOException {
+    String responseBody = getResponseError(world.connection);
+    world.responseBody = responseBody;
+    return responseBody;
   }
 
   @Then("the response code is {int}")
@@ -210,7 +295,7 @@ public class GenericAPISteps {
                 UUID.fromString(jsonBody.read(path).toString()),
                 "Mismatch on '" + path + "' in response = " + responseBody);
           } catch (Throwable t) {
-            System.out.println("Actual Response: " + responseBody);
+            log.debug("Actual Response: " + responseBody);
             throw t;
           }
         });
@@ -233,7 +318,7 @@ public class GenericAPISteps {
                 Instant.parse(jsonBody.read(path).toString()),
                 "Mismatch on '" + path + "' in response = " + responseBody);
           } catch (Throwable t) {
-            System.out.println("Actual Response: " + responseBody);
+            log.debug("Actual Response: " + responseBody);
             throw t;
           }
         });
@@ -254,11 +339,11 @@ public class GenericAPISteps {
         (path, value) -> {
           try {
             assertEquals(
-                value,
+                replaceKeywords(value),
                 jsonBody.read(path).toString(),
                 "Mismatch on '" + path + "' in response = " + responseBody);
           } catch (Throwable t) {
-            System.out.println("Actual Response: " + responseBody);
+            log.debug("Actual Response: " + responseBody);
             throw t;
           }
         });
@@ -279,11 +364,11 @@ public class GenericAPISteps {
         (path, value) -> {
           try {
             assertEquals(
-                value,
+                replaceKeywords(value),
                 jsonBody.read(path).toString(),
                 "Mismatch on '" + path + "' in response = " + responseBody);
           } catch (Throwable t) {
-            System.out.println("Response: " + responseBody);
+            log.debug("Response: " + responseBody);
             throw t;
           }
         });

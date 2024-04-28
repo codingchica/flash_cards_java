@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+@Slf4j
 public class GenericCLISteps {
   private final CLIWorld world = new CLIWorld();
   /**
@@ -41,7 +43,7 @@ public class GenericCLISteps {
     String keyword = String.format("${%s}", propertyName);
     String returnValue = stringToReplaceKeyword;
     if (StringUtils.contains(returnValue, keyword)) {
-      System.out.printf("Replacing %s with %s in %s%n", keyword, value, returnValue);
+      log.debug("Replacing {} with {} in {}", keyword, value, returnValue);
       returnValue = StringUtils.replace(returnValue, keyword, value);
     }
     return returnValue;
@@ -95,7 +97,7 @@ public class GenericCLISteps {
         String prop = entry.getKey();
         String value = entry.getValue();
         if (StringUtils.contains(prop, "JAVA")) {
-          System.out.printf("Replacing %s with %s%n", prop, value);
+          log.debug("Replacing {} with {}", prop, value);
         }
       }
 
@@ -104,7 +106,7 @@ public class GenericCLISteps {
       List<String> jvmInputs = ManagementFactory.getRuntimeMXBean().getInputArguments();
       for (String entry : jvmInputs) {
         if (StringUtils.contains(entry, "javaagent")) {
-          System.out.printf("Passing along Java agent: %s%n", entry);
+          log.debug("Passing along Java agent: {}", entry);
           world.arguments.add(entry);
         }
       }
@@ -130,11 +132,11 @@ public class GenericCLISteps {
     String nextLine;
     do {
       nextLine = bufferedReader.readLine();
-      System.out.println(nextLine);
+      log.debug(nextLine);
       if (nextLine != null) {
         world.outputLines.add(nextLine);
         if (stopWhenKeywordInLogs && StringUtils.contains(nextLine, outputLogSnippetForShutdown)) {
-          System.out.println("Server started successfully - stopping server");
+          log.debug("Server started successfully - stopping server");
           process.destroyForcibly();
           break;
         }
@@ -156,7 +158,7 @@ public class GenericCLISteps {
 
   public void runCommand(boolean stopOnceFullyStarted, String outputShutdownSnippet)
       throws IOException, InterruptedException {
-    System.out.println(world.arguments);
+    log.debug(String.valueOf(world.arguments));
 
     ProcessBuilder builder = new ProcessBuilder();
     builder.command(world.arguments);
@@ -173,7 +175,7 @@ public class GenericCLISteps {
       do {
         // Read std out logs as we go, so buffers don't fill up.
         pollCount++;
-        System.out.println("Retrieving logs while polling for status");
+        log.debug("Retrieving logs while polling for status");
         Thread.sleep(sleepIntervalMilliSec);
 
         world.outputLines.addAll(

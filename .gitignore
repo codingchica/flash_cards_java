@@ -4,3 +4,7 @@
 **/dependency-reduced-pom.xml
 **/effective-pom
 **/effective-pom.xml
+/flash-cards-api/quiz
+/flash-cards-api/quizzes
+/flash-cards-api/gradedQuiz
+**/temp.json

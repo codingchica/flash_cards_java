@@ -7,6 +7,8 @@ import static org.mockito.Mockito.*;
 import com.codingchica.flashcards.api.exceptionmappers.RenderableExceptionMapper;
 import com.codingchica.flashcards.api.resources.QuizResource;
 import com.codingchica.flashcards.core.config.FlashCardsConfiguration;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
@@ -40,6 +42,7 @@ class FlashCardsApplicationTest {
     void whenInvoked_thenSetupAsExpected() {
       // Setup
       doReturn(jerseyEnvironment).when(environment).jersey();
+      doReturn(new ObjectMapper()).when(environment).getObjectMapper();
 
       // Execution
       flashCardsApplication.run(flashCardsConfiguration, environment);
@@ -66,6 +69,7 @@ class FlashCardsApplicationTest {
       flashCardsApplication.initialize(bootstrap);
 
       // Validation
+      verify(bootstrap).addBundle(any(AssetsBundle.class));
       verifyNoMoreInteractions(bootstrap);
     }
   }

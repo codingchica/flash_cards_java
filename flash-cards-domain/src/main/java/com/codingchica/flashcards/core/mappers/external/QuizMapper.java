@@ -1,4 +1,4 @@
-package com.codingchica.flashcards.core.mappers;
+package com.codingchica.flashcards.core.mappers.external;
 
 import com.codingchica.flashcards.core.config.FlashCardGroup;
 import com.codingchica.flashcards.core.model.external.Quiz;
@@ -12,8 +12,7 @@ public interface QuizMapper {
    * Translate the internal representation of the quiz to an external representation.
    *
    * @param flashCardGroup The flashCardGroup from the configuration.
-   * @param name The name of the quiz.
    * @return The external representation of the quiz.
    */
-  Quiz internalToExternalQuizMapping(String name, FlashCardGroup flashCardGroup);
+  Quiz internalToExternalQuizMapping(FlashCardGroup flashCardGroup);
 }

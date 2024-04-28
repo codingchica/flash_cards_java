@@ -3,10 +3,14 @@ package com.codingchica.flashcards;
 import com.codingchica.flashcards.api.exceptionmappers.RenderableExceptionMapper;
 import com.codingchica.flashcards.api.resources.QuizResource;
 import com.codingchica.flashcards.core.config.FlashCardsConfiguration;
-import com.codingchica.flashcards.core.mappers.QuizMapper;
-import com.codingchica.flashcards.core.mappers.QuizMapperImpl;
+import com.codingchica.flashcards.core.mappers.external.CompletedQuizMapper;
+import com.codingchica.flashcards.core.mappers.external.CompletedQuizMapperImpl;
+import com.codingchica.flashcards.core.mappers.external.QuizMapper;
+import com.codingchica.flashcards.core.mappers.external.QuizMapperImpl;
 import com.codingchica.flashcards.service.QuizService;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.core.Application;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
@@ -47,7 +51,9 @@ public class FlashCardsApplication extends Application<FlashCardsConfiguration> 
    *     href="https://www.dropwizard.io/en/latest/manual/core.html#man-core-commands">Commands</a>
    */
   @Override
-  public void initialize(final Bootstrap<FlashCardsConfiguration> bootstrap) {}
+  public void initialize(final Bootstrap<FlashCardsConfiguration> bootstrap) {
+    bootstrap.addBundle(new AssetsBundle("/ui"));
+  }
 
   /**
    * Construct a new QuizMapper.
@@ -71,23 +77,38 @@ public class FlashCardsApplication extends Application<FlashCardsConfiguration> 
    * Construct a new QuizService.
    *
    * @param configuration The configuration to use within the QuizService.
+   * @param objectMapper The object mapper to use within the QuizService for serialization.
    * @return A QuizService instance.
    */
-  public QuizService quizService(final FlashCardsConfiguration configuration) {
+  public QuizService quizService(
+      final FlashCardsConfiguration configuration, final ObjectMapper objectMapper) {
     return QuizService.builder()
         .flashCardsConfiguration(configuration)
         .quizMapper(quizMapper())
+        .objectMapper(objectMapper)
+        .completedQuizMapper(completedQuizMapper())
         .build();
+  }
+
+  /**
+   * Construct a new CompletedQuizMapper.
+   *
+   * @return A new CompletedQuizMapper.
+   */
+  public CompletedQuizMapper completedQuizMapper() {
+    return new CompletedQuizMapperImpl();
   }
 
   /**
    * Construct a new QuizResource.
    *
    * @param configuration The configuration to use within the QuizResource.
+   * @param objectMapper The object mapper to use for serialization.
    * @return A new QuizResource.
    */
-  public QuizResource quizResource(final FlashCardsConfiguration configuration) {
-    return QuizResource.builder().quizService(quizService(configuration)).build();
+  public QuizResource quizResource(
+      final FlashCardsConfiguration configuration, final ObjectMapper objectMapper) {
+    return QuizResource.builder().quizService(quizService(configuration, objectMapper)).build();
   }
 
   /**
@@ -115,7 +136,7 @@ public class FlashCardsApplication extends Application<FlashCardsConfiguration> 
     JerseyEnvironment jerseyEnvironment = environment.jersey();
 
     // Resources that will be used by the application.
-    jerseyEnvironment.register(quizResource(configuration));
+    jerseyEnvironment.register(quizResource(configuration, environment.getObjectMapper()));
 
     // Exception mappers
     jerseyEnvironment.register(new RenderableExceptionMapper());

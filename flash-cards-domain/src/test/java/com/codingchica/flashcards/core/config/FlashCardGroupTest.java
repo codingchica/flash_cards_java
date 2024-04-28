@@ -8,7 +8,6 @@ import io.dropwizard.validation.BaseValidator;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.lang.reflect.Field;
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -26,8 +25,7 @@ class FlashCardGroupTest {
   private Map<String, String> prompts = new TreeMap<>();
 
   /** A builder to easily create new instances of the class under test. */
-  private FlashCardGroup.Builder flashCardGroupBuilder =
-      FlashCardGroup.builder().prompts(prompts).maxDuration(Duration.ofSeconds(30));
+  private FlashCardGroup.Builder flashCardGroupBuilder = ConfigFactory.flashCardGroupBuilder();
 
   /**
    * A collection to allow tests that should include validation every field to enforce that new
@@ -51,8 +49,6 @@ class FlashCardGroupTest {
               .map(Field::getName)
               .sorted(String::compareTo)
               .collect(Collectors.toCollection(LinkedHashSet::new));
-      testedFields.add("maximumPrompts");
-      testedFields.add("prompts");
 
       // Execution
       FlashCardGroup flashCardGroup = flashCardGroupBuilder.build();
@@ -63,7 +59,7 @@ class FlashCardGroupTest {
           () -> assertEqualsAndLog(0, flashCardGroup.getMaximumPrompts(), "maximumPrompts"),
           () -> assertEqualsAndLog(0, flashCardGroup.getMaximumPrompts(), "minimumPrompts"),
           () -> assertNullAndLog(flashCardGroup.getPrompts(), "prompts"),
-          () -> assertNullAndLog(flashCardGroup.getMaxDuration(), "maxDuration"),
+          () -> assertNullAndLog(flashCardGroup.getName(), "name"),
 
           // Ensure that we remember to update the UT as we add new fields, logged with the
           // ...AndLog methods above.
@@ -81,7 +77,7 @@ class FlashCardGroupTest {
 
       // Validation
       assertEquals(
-          "FlashCardGroup(maximumPrompts=0, minimumPrompts=0, maxDuration=null, prompts=null)",
+          "FlashCardGroup(maximumPrompts=0, minimumPrompts=0, prompts=null," + " name=null)",
           result);
     }
 
@@ -177,48 +173,34 @@ class FlashCardGroupTest {
 
     /** Ensure that Lombok annotations are set up as expected. */
     @Nested
-    class MaxDurationTest {
+    class NameTest {
 
       @ParameterizedTest
-      @ValueSource(
-          ints = {
-            Integer.MIN_VALUE,
-            Integer.MAX_VALUE,
-            0,
-            -1,
-            1,
-          })
-      void testGetterViaBuilder(int seconds) {
+      @NullAndEmptySource
+      @ValueSource(strings = {"MY name GoEs HeRE", " "})
+      void testGetterViaBuilder(String name) {
         // Setup
-        Duration duration = Duration.ofSeconds(seconds);
-        flashCardGroup = flashCardGroupBuilder.maxDuration(duration).build();
+        flashCardGroup = flashCardGroupBuilder.name(name).build();
 
         // Execution
-        Duration result = flashCardGroup.getMaxDuration();
+        String result = flashCardGroup.getName();
 
         // Validation
-        assertEquals(duration, result);
+        assertEquals(name, result);
       }
 
       @ParameterizedTest
-      @ValueSource(
-          ints = {
-            Integer.MIN_VALUE,
-            Integer.MAX_VALUE,
-            0,
-            -1,
-            1,
-          })
-      void testGetterViaSetter(int seconds) {
+      @NullAndEmptySource
+      @ValueSource(strings = {"MY name GoEs HeRE", " "})
+      void testGetterViaSetter(String name) {
         // Setup
-        Duration duration = Duration.ofSeconds(seconds);
-        flashCardGroup.setMaxDuration(duration);
+        flashCardGroup.setName(name);
 
         // Execution
-        Duration result = flashCardGroup.getMaxDuration();
+        String result = flashCardGroup.getName();
 
         // Validation
-        assertEquals(duration, result);
+        assertEquals(name, result);
       }
     }
 
@@ -285,8 +267,8 @@ class FlashCardGroupTest {
 
         // Validation
         assertEquals(
-            "FlashCardGroup.Builder(maximumPrompts=0, minimumPrompts=0, maxDuration=null,"
-                + " prompts=null)",
+            "FlashCardGroup.Builder(maximumPrompts=0, minimumPrompts=0,"
+                + " prompts=null, name=null)",
             result);
       }
     }
@@ -512,47 +494,35 @@ class FlashCardGroupTest {
     }
 
     @Nested
-    class MaxDurationValidationTest {
+    class NameValidationTest {
 
-      @Test
-      void whenNull_thenValidationError() {
+      @ParameterizedTest
+      @NullAndEmptySource
+      @ValueSource(strings = {" "})
+      void whenNull_thenValidationError(String name) {
         // Setup
-        flashCardGroup = flashCardGroupBuilder.maxDuration(null).build();
+        flashCardGroup = flashCardGroupBuilder.name(name).build();
 
         // Execution
         final Set<ConstraintViolation<FlashCardGroup>> violations =
             validator.validate(flashCardGroup);
 
         // Validation
-        assertOneViolation("maxDuration must not be null", violations);
+        assertOneViolation("name must not be blank", violations);
       }
 
       @Test
-      void whenTooLarge_thenValidationError() {
+      void whenTooLong_thenValidationError() {
         // Setup
-        Duration duration = Duration.ofHours(1).plus(Duration.ofSeconds(1));
-        flashCardGroup = flashCardGroupBuilder.maxDuration(duration).build();
+        String name = StringUtils.leftPad("", 51, 'A');
+        flashCardGroup = flashCardGroupBuilder.name(name).build();
 
         // Execution
         final Set<ConstraintViolation<FlashCardGroup>> violations =
             validator.validate(flashCardGroup);
 
         // Validation
-        assertOneViolation("maxDuration must be shorter than or equal to 1 hour", violations);
-      }
-
-      @Test
-      void whenTooSmall_thenValidationError() {
-        // Setup
-        Duration duration = Duration.ofSeconds(9);
-        flashCardGroup = flashCardGroupBuilder.maxDuration(duration).build();
-
-        // Execution
-        final Set<ConstraintViolation<FlashCardGroup>> violations =
-            validator.validate(flashCardGroup);
-
-        // Validation
-        assertOneViolation("maxDuration must be longer than or equal to 10 seconds", violations);
+        assertOneViolation("name must be 50 characters or less", violations);
       }
     }
 

@@ -1,4 +1,4 @@
-package com.codingchica.flashcards.core.validators;
+package com.codingchica.flashcards.core.validators.external;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -76,8 +76,7 @@ public class MinMaxPromptCountsValidatorTest {
 
     @ParameterizedTest
     @ValueSource(ints = {Integer.MIN_VALUE, -1, 0, 1, 5, 9})
-    void whenMinimumPromptsGreaterThanOrEqualToMaximumPrompts_thenNotValid(
-        int maximumPromptsValue) {
+    void whenMinimumPromptsGreaterThanMaximumPrompts_thenNotValid(int maximumPromptsValue) {
       // Setup
       int minimumPrompts = 10;
       flashCardGroup =

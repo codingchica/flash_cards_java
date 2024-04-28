@@ -6,10 +6,7 @@ import com.codingchica.flashcards.util.AnnotationValidationUtils;
 import io.dropwizard.validation.BaseValidator;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -70,14 +67,16 @@ class FlashCardsConfigurationTest {
       @Test
       void testGetterViaBuilder() {
         // Setup
-        Map<String, FlashCardGroup> flashCardGroupMap = new TreeMap<>();
+        Map<String, List<FlashCardGroup>> flashCardGroupMap = new TreeMap<>();
+        List<FlashCardGroup> flashCardGroups = new ArrayList<>();
         FlashCardGroup flashCardGroup = ConfigFactory.flashCardGroup();
-        flashCardGroupMap.put("Test1", flashCardGroup);
+        flashCardGroups.add(flashCardGroup);
+        flashCardGroupMap.put("Test1", flashCardGroups);
         flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap);
         flashCardsConfiguration = flashCardsConfigurationBuilder.build();
 
         // Execution
-        Map<String, FlashCardGroup> result = flashCardsConfiguration.getFlashCardGroupMap();
+        Map<String, List<FlashCardGroup>> result = flashCardsConfiguration.getFlashCardGroupMap();
 
         // Validation
         assertSame(flashCardGroupMap, result);
@@ -86,13 +85,15 @@ class FlashCardsConfigurationTest {
       @Test
       void testGetterViaSetter() {
         // Setup
-        Map<String, FlashCardGroup> flashCardGroupMap = new TreeMap<>();
+        Map<String, List<FlashCardGroup>> flashCardGroupMap = new TreeMap<>();
+        List<FlashCardGroup> flashCardGroups = new ArrayList<>();
         FlashCardGroup flashCardGroup = ConfigFactory.flashCardGroup();
-        flashCardGroupMap.put("Test1", flashCardGroup);
+        flashCardGroups.add(flashCardGroup);
+        flashCardGroupMap.put("Test1", flashCardGroups);
         flashCardsConfiguration.setFlashCardGroupMap(flashCardGroupMap);
 
         // Execution
-        Map<String, FlashCardGroup> result = flashCardsConfiguration.getFlashCardGroupMap();
+        Map<String, List<FlashCardGroup>> result = flashCardsConfiguration.getFlashCardGroupMap();
 
         // Validation
         assertSame(flashCardGroupMap, result);
@@ -139,7 +140,8 @@ class FlashCardsConfigurationTest {
     class FlashCardGroupMapTest {
       @ParameterizedTest
       @NullAndEmptySource
-      void whenFlashCardGroupMapNull_thenNotValid(Map<String, FlashCardGroup> flashCardGroupMap) {
+      void whenFlashCardGroupMapNull_thenNotValid(
+          Map<String, List<FlashCardGroup>> flashCardGroupMap) {
         // Setup
         flashCardsConfiguration =
             flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
@@ -162,8 +164,9 @@ class FlashCardsConfigurationTest {
         void whenFlashCardGroupMapStringBlank_thenNotValid(String key) {
           // Setup
           String sanitizedKey = (key == null) ? "" : key;
-          Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
-          flashCardGroupMap.put(key, flashCardGroup);
+          Map<String, List<FlashCardGroup>> flashCardGroupMap = new HashMap<>();
+          List<FlashCardGroup> flashCardGroups = new ArrayList<>();
+          flashCardGroupMap.put(key, flashCardGroups);
           flashCardsConfiguration =
               flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
 
@@ -182,8 +185,10 @@ class FlashCardsConfigurationTest {
         void whenFlashCardGroupMapStringInvalidChars_thenNotValid(String key) {
           // Setup
           String sanitizedKey = (key == null) ? "" : key;
-          Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
-          flashCardGroupMap.put(key, flashCardGroup);
+          Map<String, List<FlashCardGroup>> flashCardGroupMap = new HashMap<>();
+          List<FlashCardGroup> flashCardGroups = new ArrayList<>();
+          flashCardGroups.add(flashCardGroup);
+          flashCardGroupMap.put(key, flashCardGroups);
           flashCardsConfiguration =
               flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
 
@@ -206,8 +211,10 @@ class FlashCardsConfigurationTest {
           // Setup
           String key = StringUtils.leftPad("", keyLength, "A");
           System.out.println("key=" + key);
-          Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
-          flashCardGroupMap.put(key, flashCardGroup);
+          Map<String, List<FlashCardGroup>> flashCardGroupMap = new HashMap<>();
+          List<FlashCardGroup> flashCardGroups = new ArrayList<>();
+          flashCardGroups.add(flashCardGroup);
+          flashCardGroupMap.put(key, flashCardGroups);
           flashCardsConfiguration =
               flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
 
@@ -230,8 +237,10 @@ class FlashCardsConfigurationTest {
         @NullSource
         void whenFlashCardGroupMapValueNull_thenNotValid(FlashCardGroup flashCardGroupValue) {
           // Setup
-          Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
-          flashCardGroupMap.put(flashCardGroupMapKey, flashCardGroupValue);
+          Map<String, List<FlashCardGroup>> flashCardGroupMap = new HashMap<>();
+          List<FlashCardGroup> flashCardGroups = new ArrayList<>();
+          flashCardGroups.add(flashCardGroupValue);
+          flashCardGroupMap.put(flashCardGroupMapKey, flashCardGroups);
           flashCardsConfiguration =
               flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
 
@@ -242,16 +251,19 @@ class FlashCardsConfigurationTest {
           // Validation
           AnnotationValidationUtils.assertOneViolation(
               String.format(
-                  "flashCardGroupMap[%s].<map value> must not be null", flashCardGroupMapKey),
+                  "flashCardGroupMap[%s].<map value>[0].<list element> must not be null",
+                  flashCardGroupMapKey),
               violations);
         }
 
         @Test
         void whenFlashCardGroupMapValueMinMaxReversed_thenNotValid() {
           // Setup
-          Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
+          Map<String, List<FlashCardGroup>> flashCardGroupMap = new HashMap<>();
+          List<FlashCardGroup> flashCardGroups = new ArrayList<>();
           flashCardGroup = flashCardGroupBuilder.maximumPrompts(2).minimumPrompts(3).build();
-          flashCardGroupMap.put(flashCardGroupMapKey, flashCardGroup);
+          flashCardGroups.add(flashCardGroup);
+          flashCardGroupMap.put(flashCardGroupMapKey, flashCardGroups);
           flashCardsConfiguration =
               flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
 
@@ -262,7 +274,8 @@ class FlashCardsConfigurationTest {
           // Validation
           AnnotationValidationUtils.assertOneViolation(
               String.format(
-                  "flashCardGroupMap[%s] minimumPrompts must not be larger than maximumPrompts",
+                  "flashCardGroupMap[%s].<map value>[0] minimumPrompts must not be larger than"
+                      + " maximumPrompts",
                   flashCardGroupMapKey),
               violations);
         }
@@ -270,9 +283,11 @@ class FlashCardsConfigurationTest {
         @Test
         void whenFlashCardGroupMapValueNotValid_thenNotValid() {
           // Setup
-          Map<String, FlashCardGroup> flashCardGroupMap = new HashMap<>();
+          Map<String, List<FlashCardGroup>> flashCardGroupMap = new HashMap<>();
+          List<FlashCardGroup> flashCardGroups = new ArrayList<>();
           flashCardGroup = flashCardGroupBuilder.prompts(null).build();
-          flashCardGroupMap.put(flashCardGroupMapKey, flashCardGroup);
+          flashCardGroups.add(flashCardGroup);
+          flashCardGroupMap.put(flashCardGroupMapKey, flashCardGroups);
           flashCardsConfiguration =
               flashCardsConfigurationBuilder.flashCardGroupMap(flashCardGroupMap).build();
 
@@ -283,7 +298,8 @@ class FlashCardsConfigurationTest {
           // Validation
           AnnotationValidationUtils.assertOneViolation(
               String.format(
-                  "flashCardGroupMap[%s].prompts must not be empty", flashCardGroupMapKey),
+                  "flashCardGroupMap[%s].<map value>[0].prompts must not be empty",
+                  flashCardGroupMapKey),
               violations);
         }
       }

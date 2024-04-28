@@ -22,7 +22,7 @@ Feature: Quiz - Get
     @Component
     Scenario Outline: Failures - Unsupported Response Content Types
       Given that my request contains header Accept = <MIMEType>
-      And that my request goes to endpoint quizzes/Adding%20By%2000
+      And that my request goes to endpoint quizzes/Adding%200
       When I submit the request
       Then the response code is 406
       And the error response body contains JSON data
@@ -40,7 +40,7 @@ Feature: Quiz - Get
     Scenario Outline: Various Request Content Types
       Given that my request contains header Content-Type = <MIMEType>
       And that my request contains header Accept = application/json
-      And that my request goes to endpoint quizzes/Adding%20By%2000
+      And that my request goes to endpoint quizzes/Adding%200
       When I submit the request
       And the error response body contains JSON data
         | code    | 415                             |
@@ -56,19 +56,17 @@ Feature: Quiz - Get
   Rule:  When successful, the expected response should be returned.
 
     @Component
-    Scenario: Various Request Content Types
+    Scenario: Successful API call
       Given that my request contains header Content-Type = application/json
       And that my request contains header Accept = application/json
-      And that my request goes to endpoint quizzes/Adding%20By%2000
+      And that my request goes to endpoint quizzes/Adding%200
       When I submit the request
       Then the response code is 200
       And the response body contains UUID at path(s)
         | id |
-      And the response body contains Instant at path(s)
-        | dueDateTime |
       And the response body contains JSON data
       # One copy of each expected response, as we aren't limiting by min or max
-        | name               | Adding By 00 |
+        | name               | Adding 0 |
         | prompts[*]["0+0"]  | ["0"]        |
         | prompts[*]["0+1"]  | ["1"]        |
         | prompts[*]["0+10"] | ["10"]       |

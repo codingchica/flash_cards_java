@@ -7,7 +7,7 @@ Feature: Quizzes API - Unsupported Methods
     And that my request goes to the application port
 
   @Component
-  Scenario Outline: 405 Method Not Supported
+  Scenario Outline: List Quizzes - 405 Method Not Supported
     Given that my request uses the <HTTPMethod> method
     And that my request goes to endpoint quizzes
     When I submit the request
@@ -20,7 +20,7 @@ Feature: Quizzes API - Unsupported Methods
       | DELETE     |
 
   @Component
-  Scenario Outline: 405 Method Not Supported
+  Scenario Outline: Get Quiz - 405 Method Not Supported
     Given that my request uses the <HTTPMethod> method
     And that my request goes to endpoint quizzes/Adding%20By%2000
     When I submit the request
@@ -28,6 +28,21 @@ Feature: Quizzes API - Unsupported Methods
     Examples:
       | HTTPMethod |
       | POST       |
+      | PUT        |
+      | TRACE      |
+      | DELETE     |
+
+
+  @Component
+  Scenario Outline: Grade Quiz - 405 Method Not Supported
+    Given that my request uses the <HTTPMethod> method
+    And that my request is for a valid quiz ID
+    And that my request goes to endpoint quizzes/Adding%200/{ID}
+    When I submit the request
+    Then the response code is 405
+    Examples:
+      | HTTPMethod |
+      | GET       |
       | PUT        |
       | TRACE      |
       | DELETE     |

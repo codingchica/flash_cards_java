@@ -1,6 +1,7 @@
 package com.codingchica.flashcards.core.config;
 
-import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,9 +15,11 @@ public class ConfigFactory {
    * @return A populated FlashCardsConfiguration.Builder object, setup for validation happy-path.
    */
   public static FlashCardsConfiguration.Builder flashCardsConfigurationBuilder() {
-    Map<String, FlashCardGroup> groups = new TreeMap<>();
-    groups.put("flashcardGroup", flashCardGroup());
-    return FlashCardsConfiguration.builder().flashCardGroupMap(groups);
+    Map<String, List<FlashCardGroup>> groupsMap = new TreeMap<>();
+    List<FlashCardGroup> groups = new ArrayList<>();
+    groups.add(flashCardGroup());
+    groupsMap.put("flashcardGroup", groups);
+    return FlashCardsConfiguration.builder().flashCardGroupMap(groupsMap);
   }
 
   /**
@@ -36,7 +39,7 @@ public class ConfigFactory {
   public static FlashCardGroup.Builder flashCardGroupBuilder() {
     Map<String, String> prompts = new TreeMap<>();
     prompts.put("key", "value");
-    return FlashCardGroup.builder().prompts(prompts).maxDuration(Duration.ofSeconds(30));
+    return FlashCardGroup.builder().prompts(prompts).name("name");
   }
 
   /**

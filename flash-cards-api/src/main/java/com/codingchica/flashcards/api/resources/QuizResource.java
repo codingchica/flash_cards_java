@@ -1,13 +1,18 @@
 package com.codingchica.flashcards.api.resources;
 
 import com.codingchica.flashcards.core.exceptions.RenderableException;
+import com.codingchica.flashcards.core.model.external.CompletedQuiz;
 import com.codingchica.flashcards.core.model.external.Quiz;
+import com.codingchica.flashcards.core.model.external.QuizResult;
 import com.codingchica.flashcards.service.QuizService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,8 +34,8 @@ public class QuizResource {
    * @return A collection of quiz names available.
    */
   @GET
-  public List<String> listQuizzes() {
-    return quizService.listQuizNames();
+  public Map<String, List<String>> listQuizzes() {
+    return quizService.listQuizNamesByCategory();
   }
 
   /**
@@ -51,5 +56,21 @@ public class QuizResource {
                 new RenderableException(
                     HttpStatus.NOT_FOUND_404,
                     String.format("No match found for quiz: '%s'", quizName)));
+  }
+
+  /**
+   * Submit a completed quiz for grading.
+   *
+   * @param id The unique ID of the quiz.
+   * @param completedQuiz The results from the quiz.
+   * @return The result of the graded quiz.
+   * @throws RenderableException when the requested quiz is not found in the server.
+   */
+  @POST
+  @Path("/{quizName}/{id}")
+  public @Valid QuizResult gradeQuiz(
+      @PathParam(("id")) @NotNull UUID id, @NotNull CompletedQuiz completedQuiz)
+      throws RenderableException {
+    return quizService.gradeQuiz(id, completedQuiz);
   }
 }

@@ -22,7 +22,7 @@ Feature: Quizzes API - Head - Success
     @Component
     Scenario Outline: Success for GetQuiz.
       Given that my request uses the <HTTPMethod> method
-      And that my request goes to endpoint quizzes/Adding%20By%2000
+      And that my request goes to endpoint quizzes/Adding%200
       When I submit the request
       Then the response code is 200
       And the response body is completely empty

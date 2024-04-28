@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>flash-cards</title>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+    <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+    <script src="./index.js"></script>
+</head>
+<body>
+
+<ons-navigator swipeable id="myNavigator" page="groupings.html"></ons-navigator>
+
+<template id="groupings.html">
+    <ons-page id="quiz-grouping-list">
+        <ons-toolbar>
+            <div class="left"></div>
+            <div class="center">Home</div>
+        </ons-toolbar>
+        <p class="intro">
+            Please select a grouping.
+        </p>
+
+        <script>
+            ons.getScriptPage().onInit = loadQuizGroupings
+        </script>
+    </ons-page>
+</template>
+
+<template id="quiz-list.html">
+    <ons-page id="home-quiz-list">
+        <ons-toolbar>
+            <div class="left"><ons-back-button>Back</ons-back-button></div>
+            <div class="center">Home</div>
+            <div class="right">
+                <label>Inline Grading </label><ons-switch id="grade-quiz-inline"></ons-switch>
+            </div>
+        </ons-toolbar>
+        <p class="intro">
+            Please select a quiz.
+        </p>
+
+        <script>
+            ons.getScriptPage().onInit = loadQuizList
+        </script>
+    </ons-page>
+</template>
+
+<template id="quiz.html">
+    <ons-page id="forms-page">
+        <ons-toolbar>
+            <div class="left"><ons-back-button>Back</ons-back-button></div>
+            <div class="center">Quiz</div>
+            <div class="right">
+                <span id="inline-grading-display-quiz"></span>
+                <span>&nbsp;</span>
+            </div>
+        </ons-toolbar>
+        <form name="quiz">
+            <ons-list id="question-list">
+                <ons-list-header>Questions</ons-list-header>
+            </ons-list>
+
+            <ons-progress-bar id="quiz-progress" value="0"></ons-progress-bar>
+            <ons-button id="quiz-submit" modifier="large" disabled="true" onclick="document.querySelector('#myNavigator').pushPage('score.html', {data: {title: 'Score'}});">Submit</ons-button>
+        </form>
+        <script>
+          ons.getScriptPage().onInit = loadQuizQuestions
+        </script>
+    </ons-page>
+</template>
+
+</template>
+
+<template id="score.html">
+    <ons-page id="score-page">
+        <ons-toolbar>
+            <div class="left"><!-- No back button - must reload the page. -->
+                &nbsp;
+                <span id="datetime"></span>
+            </div>
+            <div class="center">Score</div>
+            <div class="right">
+                <span id="inline-grading-display-score"></span>
+                <span>&nbsp;</span>
+            </div>
+        </ons-toolbar>
+
+        <br />
+        <br />
+        <div class="text-center">
+            <div class="card__title">
+                <span id="correctAnswers"></span> / <span id="totalPrompts"></span> = <span id="percentage"></span>%
+            </div>
+            <br />
+            <br />
+            <div id="duration"></div>
+        </div>
+        <script>
+          ons.getScriptPage().onInit = scoreQuiz
+        </script>
+    </ons-page>
+</template>
+</body>
+</html>

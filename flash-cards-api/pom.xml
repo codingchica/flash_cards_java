@@ -24,17 +24,22 @@
   <dependencies>
     <!-- Runtime dependencies -->
     <dependency>
-      <!-- https://github.com/dropwizard/dropwizard/tree/release/2.1.x/dropwizard-core -->
+      <!-- https://github.com/dropwizard/dropwizard/tree/release/4.0.x/dropwizard-core -->
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-core</artifactId>
     </dependency>
     <dependency>
       <!--
-            https://github.com/dropwizard/dropwizard/tree/release/2.1.x/dropwizard-client
+            https://github.com/dropwizard/dropwizard/tree/release/4.0.x/dropwizard-client
             https://www.dropwizard.io/en/latest/manual/testing.html
             -->
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-client</artifactId>
+    </dependency>
+    <dependency>
+      <!-- https://github.com/dropwizard/dropwizard/tree/release/4.0.x/dropwizard-assets -->
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-assets</artifactId>
     </dependency>
     <dependency>
       <!-- https://github.com/FasterXML/jackson-annotations -->
@@ -94,7 +99,7 @@
     </dependency>
     <dependency>
       <!--
-            https://github.com/dropwizard/dropwizard/tree/release/2.1.x/dropwizard-testing
+            https://github.com/dropwizard/dropwizard/tree/release/4.0.x/dropwizard-testing
             https://www.dropwizard.io/en/latest/manual/testing.html
             -->
       <groupId>io.dropwizard</groupId>
@@ -290,7 +295,7 @@
               <perCoreThreadCount>false</perCoreThreadCount>
               <environmentVariables>
                 <!-- Needed by codingchica.demo.test.dropwizard.config.ConfigurationFileValidationTest -->
-                <LOG_LEVEL_MAIN>DEBUG</LOG_LEVEL_MAIN>
+                <LOG_LEVEL_MAIN>INFO</LOG_LEVEL_MAIN>
               </environmentVariables>
             </configuration>
           </execution>
@@ -328,6 +333,7 @@
               <parallel>both</parallel>
               <threadCount>4</threadCount>
               <perCoreThreadCount>false</perCoreThreadCount>
+              <redirectTestOutputToFile>false</redirectTestOutputToFile>
             </configuration>
           </execution>
         </executions>

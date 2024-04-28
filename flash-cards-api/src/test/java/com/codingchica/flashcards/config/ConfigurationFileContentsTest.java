@@ -34,10 +34,10 @@ import io.dropwizard.util.DataSize;
 import jakarta.validation.Validator;
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.CookieCompliance;
@@ -45,6 +45,7 @@ import org.eclipse.jetty.http.HttpCompliance;
 import org.eclipse.jetty.http.UriCompliance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Spy;
 
@@ -71,7 +72,7 @@ public class ConfigurationFileContentsTest {
   private final ResourceConfigurationSourceProvider resourceConfigurationSourceProvider =
       new ResourceConfigurationSourceProvider();
 
-  private static List<String> configFiles = null;
+  private static Stream<Arguments> configFiles = null;
   /**
    * A collection to allow tests that should include validation every field to enforce that new
    * fields are also added.
@@ -79,6 +80,8 @@ public class ConfigurationFileContentsTest {
   private final Set<String> testedFields = new TreeSet<>();
 
   private final Set<String> expectedFieldNames = new TreeSet<>();
+
+  private boolean isTestConfig = false;
 
   /**
    * These are set up in the Maven pom.xml. If you are running the test locally in an IDE, you must
@@ -88,7 +91,7 @@ public class ConfigurationFileContentsTest {
   public static void enforceEnvironmentSetup() {
     Map<String, String> expectedEnvironmentVariables = new TreeMap<>();
 
-    expectedEnvironmentVariables.put("LOG_LEVEL_MAIN", "DEBUG");
+    expectedEnvironmentVariables.put("LOG_LEVEL_MAIN", "INFO");
 
     expectedEnvironmentVariables.forEach(
         (key, value) ->
@@ -99,38 +102,48 @@ public class ConfigurationFileContentsTest {
     objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
   }
 
+  private static Stream<Arguments> getConfigFilesInDirectory(File directory, boolean isTestConfig) {
+
+    assertTrue(directory.exists(), directory.getPath() + " does not exist");
+    assertTrue(directory.isDirectory(), directory.getPath() + " is not a directory");
+    return Arrays.stream(
+        Objects.requireNonNull(
+            directory.listFiles(
+                (dir, name) ->
+                    StringUtils.endsWithIgnoreCase(name, ".yml")
+                        || StringUtils.endsWithIgnoreCase(name, ".yaml"))))
+        // Classloader is used at runtime to retrieve file contents.
+        .map(
+            (item) ->
+                Arguments.of(
+                    StringUtils.substring(
+                        item.getPath(), StringUtils.indexOf(item.getPath(), "appConfig")),
+                    isTestConfig))
+        .toList()
+        .stream();
+  }
+
   /**
    * Retrieve all YAML files from the configuration directory: src/main/resources/appConfig.
    *
    * @return The file paths to available configuration files.
    */
-  public static List<String> provideConfigFiles() {
+  public static Stream<Arguments> provideConfigFiles() {
     if (configFiles == null) {
-      File configFolder = new File("src/main/resources/appConfig");
-      assertTrue(configFolder.exists(), configFolder.getPath() + " does not exist");
-      assertTrue(configFolder.isDirectory(), configFolder.getPath() + " is not a directory");
       configFiles =
-          Arrays.stream(
-                  Objects.requireNonNull(
-                      configFolder.listFiles(
-                          (dir, name) ->
-                              StringUtils.endsWithIgnoreCase(name, ".yml")
-                                  || StringUtils.endsWithIgnoreCase(name, ".yaml"))))
-              // Classloader is used at runtime to retrieve file contents.
-              .map(
-                  (item) ->
-                      StringUtils.substring(
-                          item.getPath(), StringUtils.indexOf(item.getPath(), "appConfig")))
-              .toList();
+          Stream.concat(
+              getConfigFilesInDirectory(new File("src/main/resources/appConfig"), false),
+              getConfigFilesInDirectory(new File("src/test/resources/appConfig"), true));
     }
     return configFiles;
   }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource("provideConfigFiles")
-  public void testFileContents(@NonNull String configFilePath)
+  public void testFileContents(@NonNull String configFilePath, boolean isTestConfig)
       throws ConfigurationException, IOException {
     // Setup
+    this.isTestConfig = isTestConfig;
     String prefix = "appConfig";
     expectClassFieldsTested(prefix, FlashCardsConfiguration.class);
     SubstitutingSourceProvider substitutingSourceProvider =
@@ -143,81 +156,44 @@ public class ConfigurationFileContentsTest {
     // Validation
     // Check immediate filed status
     assertAll(
+        // Dropwizard fields
         () -> assertNotNullAndLog(configPOJO.getAdminFactory(), prefix + ".adminFactory"),
-        () -> assertNotNullAndLog(configPOJO.getFlashCardGroupMap(), prefix + ".flashCardGroupMap"),
         () -> assertTrueAndLog(configPOJO.getHealthFactory().isEmpty(), prefix + ".healthFactory"),
         () -> assertNotNullAndLog(configPOJO.getLoggingFactory(), prefix + ".loggingFactory"),
         () -> assertNotNullAndLog(configPOJO.getMetricsFactory(), prefix + ".metricsFactory"),
-        () -> assertNotNullAndLog(configPOJO.getServerFactory(), prefix + ".serverFactory"));
+        () -> assertNotNullAndLog(configPOJO.getServerFactory(), prefix + ".serverFactory"),
+        // My fields
+        () ->
+            assertNotNullAndLog(configPOJO.getFlashCardGroupMap(), prefix + ".flashCardGroupMap"));
     assertAllFieldsUsedAndClear();
 
     // Drill into nested objects for validations.
+    // Dropwizard fields
     testContents(configPOJO.getAdminFactory());
-    testContents_FlashCardGroupMap(configPOJO.getFlashCardGroupMap());
     testContents(configPOJO.getLoggingFactory());
     testContents(configPOJO.getMetricsFactory());
     testContents(configPOJO.getServerFactory());
+    // My fields
+    if (isTestConfig) {
+      testContents_FlashCardGroupMapTest(configPOJO.getFlashCardGroupMap());
+    } else {
+      testContents_FlashCardGroupMapProd(configPOJO.getFlashCardGroupMap());
+    }
   }
 
-  public void testContents_FlashCardGroupMap(
-      @NonNull Map<String, FlashCardGroup> flashCardGroupMap) {
+  public void testContents_FlashCardGroupMapProd(
+      @NonNull Map<String, List<FlashCardGroup>> flashCardGroupMap) {
     // Setup
-    String prefix = "flashCardGroupMap";
+    int minPrompts = 20;
+    int maxPrompts = 20;
     String[] expectedKeys =
         new String[] {
-          "Adding By 00",
-          "Adding By 01",
-          "Adding By 02",
-          "Adding By 03",
-          "Adding By 04",
-          "Adding By 05",
-          "Adding By 06",
-          "Adding By 07",
-          "Adding By 08",
-          "Adding By 09",
-          "Adding By 10",
-          "Adding By 11",
-          "Adding By 12",
-          "Dividing By 01",
-          "Dividing By 02",
-          "Dividing By 03",
-          "Dividing By 04",
-          "Dividing By 05",
-          "Dividing By 06",
-          "Dividing By 07",
-          "Dividing By 08",
-          "Dividing By 09",
-          "Dividing By 10",
-          "Dividing By 11",
-          "Dividing By 12",
-          "Multiplying By 00",
-          "Multiplying By 01",
-          "Multiplying By 02",
-          "Multiplying By 03",
-          "Multiplying By 04",
-          "Multiplying By 05",
-          "Multiplying By 06",
-          "Multiplying By 07",
-          "Multiplying By 08",
-          "Multiplying By 09",
-          "Multiplying By 10",
-          "Multiplying By 11",
-          "Multiplying By 12",
-          "Subtracting By 00",
-          "Subtracting By 01",
-          "Subtracting By 02",
-          "Subtracting By 03",
-          "Subtracting By 04",
-          "Subtracting By 05",
-          "Subtracting By 06",
-          "Subtracting By 07",
-          "Subtracting By 08",
-          "Subtracting By 09",
-          "Subtracting By 10",
-          "Subtracting By 11",
-          "Subtracting By 12",
+          "Addition", "Division", "Multiplication", "Subtraction",
         };
-    expectClassFieldsTested(prefix, FlashCardGroup.class);
+    flashCardGroupMap.forEach(
+        (key, value) ->
+            value.stream()
+                .forEach(item -> expectClassFieldsTested(item.getName(), FlashCardGroup.class)));
 
     // Validation
     // Immediate fields
@@ -225,65 +201,112 @@ public class ConfigurationFileContentsTest {
         Arrays.stream(expectedKeys).toList(),
         flashCardGroupMap.keySet().stream().sorted().collect(Collectors.toList()),
         "flashCardGroupMap.keySet");
+    List<FlashCardGroup> addition = flashCardGroupMap.get("Addition");
+    List<FlashCardGroup> subtraction = flashCardGroupMap.get("Subtraction");
+    List<FlashCardGroup> multiplication = flashCardGroupMap.get("Multiplication");
+    List<FlashCardGroup> division = flashCardGroupMap.get("Division");
     assertAll(
-        () -> testAdding(flashCardGroupMap.get("Adding By 00"), 0),
-        () -> testAdding(flashCardGroupMap.get("Adding By 01"), 1),
-        () -> testAdding(flashCardGroupMap.get("Adding By 02"), 2),
-        () -> testAdding(flashCardGroupMap.get("Adding By 03"), 3),
-        () -> testAdding(flashCardGroupMap.get("Adding By 04"), 4),
-        () -> testAdding(flashCardGroupMap.get("Adding By 05"), 5),
-        () -> testAdding(flashCardGroupMap.get("Adding By 06"), 6),
-        () -> testAdding(flashCardGroupMap.get("Adding By 07"), 7),
-        () -> testAdding(flashCardGroupMap.get("Adding By 08"), 8),
-        () -> testAdding(flashCardGroupMap.get("Adding By 09"), 9),
-        () -> testAdding(flashCardGroupMap.get("Adding By 10"), 10),
-        () -> testAdding(flashCardGroupMap.get("Adding By 11"), 11),
-        () -> testAdding(flashCardGroupMap.get("Adding By 12"), 12),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 00"), 0),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 01"), 1),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 02"), 2),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 03"), 3),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 04"), 4),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 05"), 5),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 06"), 6),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 07"), 7),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 08"), 8),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 09"), 9),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 10"), 10),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 11"), 11),
-        () -> testSubtraction(flashCardGroupMap.get("Subtracting By 12"), 12),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 00"), 0),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 01"), 1),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 02"), 2),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 03"), 3),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 04"), 4),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 05"), 5),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 06"), 6),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 07"), 7),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 08"), 8),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 09"), 9),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 10"), 10),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 11"), 11),
-        () -> testMultiplication(flashCardGroupMap.get("Multiplying By 12"), 12),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 01"), 1),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 02"), 2),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 03"), 3),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 04"), 4),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 05"), 5),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 06"), 6),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 07"), 7),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 08"), 8),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 09"), 9),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 10"), 10),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 11"), 11),
-        () -> testDivision(flashCardGroupMap.get("Dividing By 12"), 12));
+        () -> testAdding("Adding 0", addition, 0, minPrompts, maxPrompts),
+        () -> testAdding("Adding 1", addition, 1, minPrompts, maxPrompts),
+        () -> testAdding("Adding 2", addition, 2, minPrompts, maxPrompts),
+        () -> testAdding("Adding 3", addition, 3, minPrompts, maxPrompts),
+        () -> testAdding("Adding 4", addition, 4, minPrompts, maxPrompts),
+        () -> testAdding("Adding 5", addition, 5, minPrompts, maxPrompts),
+        () -> testAdding("Adding 6", addition, 6, minPrompts, maxPrompts),
+        () -> testAdding("Adding 7", addition, 7, minPrompts, maxPrompts),
+        () -> testAdding("Adding 8", addition, 8, minPrompts, maxPrompts),
+        () -> testAdding("Adding 9", addition, 9, minPrompts, maxPrompts),
+        () -> testAdding("Adding 10", addition, 10, minPrompts, maxPrompts),
+        () -> testAdding("Adding 11", addition, 11, minPrompts, maxPrompts),
+        () -> testAdding("Adding 12", addition, 12, minPrompts, maxPrompts),
+        () -> testSubtraction("Subtracting 0", subtraction, 0),
+        () -> testSubtraction("Subtracting 1", subtraction, 1),
+        () -> testSubtraction("Subtracting 2", subtraction, 2),
+        () -> testSubtraction("Subtracting 3", subtraction, 3),
+        () -> testSubtraction("Subtracting 4", subtraction, 4),
+        () -> testSubtraction("Subtracting 5", subtraction, 5),
+        () -> testSubtraction("Subtracting 6", subtraction, 6),
+        () -> testSubtraction("Subtracting 7", subtraction, 7),
+        () -> testSubtraction("Subtracting 8", subtraction, 8),
+        () -> testSubtraction("Subtracting 9", subtraction, 9),
+        () -> testSubtraction("Subtracting 10", subtraction, 10),
+        () -> testSubtraction("Subtracting 11", subtraction, 11),
+        () -> testSubtraction("Subtracting 12", subtraction, 12),
+        () -> testMultiplication("Multiplying By 0", multiplication, 0),
+        () -> testMultiplication("Multiplying By 1", multiplication, 1),
+        () -> testMultiplication("Multiplying By 2", multiplication, 2),
+        () -> testMultiplication("Multiplying By 3", multiplication, 3),
+        () -> testMultiplication("Multiplying By 4", multiplication, 4),
+        () -> testMultiplication("Multiplying By 5", multiplication, 5),
+        () -> testMultiplication("Multiplying By 6", multiplication, 6),
+        () -> testMultiplication("Multiplying By 7", multiplication, 7),
+        () -> testMultiplication("Multiplying By 8", multiplication, 8),
+        () -> testMultiplication("Multiplying By 9", multiplication, 9),
+        () -> testMultiplication("Multiplying By 10", multiplication, 10),
+        () -> testMultiplication("Multiplying By 11", multiplication, 11),
+        () -> testMultiplication("Multiplying By 12", multiplication, 12),
+        () -> testDivision("Dividing By 1", division, 1),
+        () -> testDivision("Dividing By 2", division, 2),
+        () -> testDivision("Dividing By 3", division, 3),
+        () -> testDivision("Dividing By 4", division, 4),
+        () -> testDivision("Dividing By 5", division, 5),
+        () -> testDivision("Dividing By 6", division, 6),
+        () -> testDivision("Dividing By 7", division, 7),
+        () -> testDivision("Dividing By 8", division, 8),
+        () -> testDivision("Dividing By 9", division, 9),
+        () -> testDivision("Dividing By 10", division, 10),
+        () -> testDivision("Dividing By 11", division, 11),
+        () -> testDivision("Dividing By 12", division, 12));
 
     assertAllFieldsUsedAndClear();
     // No nested objects
   }
 
-  public void testAdding(@NonNull FlashCardGroup flashCardGroup, int addend) {
+  public void testContents_FlashCardGroupMapTest(
+      @NonNull Map<String, List<FlashCardGroup>> flashCardGroupMap) {
     // Setup
+    String prefix = "flashCardGroupMap";
+    String[] expectedKeys =
+        new String[] {
+          "Addition",
+        };
+    flashCardGroupMap.forEach(
+        (key, value) ->
+            value.stream()
+                .forEach(item -> expectClassFieldsTested(item.getName(), FlashCardGroup.class)));
+
+    // Validation
+    // Immediate fields
+    assertEquals(
+        Arrays.stream(expectedKeys).toList(),
+        flashCardGroupMap.keySet().stream().sorted().collect(Collectors.toList()),
+        "flashCardGroupMap.keySet");
+    List<FlashCardGroup> addition = flashCardGroupMap.get("Addition");
+    assertAll(() -> testAdding("Adding 0", addition, 0, 0, 0));
+
+    assertAllFieldsUsedAndClear();
+    // No nested objects
+  }
+
+  public void testAdding(
+      String name,
+      @NonNull List<FlashCardGroup> flashCardGroups,
+      int addend,
+      int minPrompts,
+      int maxPrompts) {
+    // Setup
+    Optional<FlashCardGroup> optionalQuiz =
+        flashCardGroups.stream()
+            .filter(quiz -> StringUtils.equals(quiz.getName(), name))
+            .findFirst();
+    assertFalse(
+        optionalQuiz.isEmpty(),
+        () ->
+            "'"
+                + name
+                + "' quiz not found in "
+                + flashCardGroups.stream().map(FlashCardGroup::getName).toList());
+    FlashCardGroup flashCardGroup = optionalQuiz.get();
     Optional<Map<String, String>> expectedPrompts =
         IntStream.range(0, 13)
             .mapToObj(
@@ -306,22 +329,31 @@ public class ConfigurationFileContentsTest {
     assertAll(
         () ->
             assertEqualsAndLog(
-                expectedPrompts.get(), flashCardGroup.getPrompts(), "flashCardGroupMap.prompts"),
+                expectedPrompts.get(), flashCardGroup.getPrompts(), name + ".prompts"),
         () ->
             assertEqualsAndLog(
-                Duration.ofMinutes(1),
-                flashCardGroup.getMaxDuration(),
-                "flashCardGroupMap.maxDuration"),
+                minPrompts, flashCardGroup.getMaximumPrompts(), name + ".maximumPrompts"),
         () ->
             assertEqualsAndLog(
-                20, flashCardGroup.getMaximumPrompts(), "flashCardGroupMap.maximumPrompts"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMinimumPrompts(), "flashCardGroupMap.minimumPrompts"));
+                maxPrompts, flashCardGroup.getMinimumPrompts(), name + ".minimumPrompts"),
+        () -> assertEqualsAndLog(name, flashCardGroup.getName(), name + ".name"));
   }
 
-  public void testSubtraction(@NonNull FlashCardGroup flashCardGroup, int addend) {
+  public void testSubtraction(
+      String name, @NonNull List<FlashCardGroup> flashCardGroups, int addend) {
     // Setup
+    Optional<FlashCardGroup> optionalQuiz =
+        flashCardGroups.stream()
+            .filter(quiz -> StringUtils.equals(quiz.getName(), name))
+            .findFirst();
+    assertFalse(
+        optionalQuiz.isEmpty(),
+        () ->
+            "'"
+                + name
+                + "' quiz not found in "
+                + flashCardGroups.stream().map(FlashCardGroup::getName).toList());
+    FlashCardGroup flashCardGroup = optionalQuiz.get();
     Optional<Map<String, String>> expectedPrompts =
         IntStream.range(0 + addend, 13 + addend)
             .mapToObj(
@@ -342,22 +374,27 @@ public class ConfigurationFileContentsTest {
     assertAll(
         () ->
             assertEqualsAndLog(
-                expectedPrompts.get(), flashCardGroup.getPrompts(), "flashCardGroupMap.prompts"),
-        () ->
-            assertEqualsAndLog(
-                Duration.ofMinutes(1),
-                flashCardGroup.getMaxDuration(),
-                "flashCardGroupMap.maxDuration"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMaximumPrompts(), "flashCardGroupMap.maximumPrompts"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMinimumPrompts(), "flashCardGroupMap.minimumPrompts"));
+                expectedPrompts.get(), flashCardGroup.getPrompts(), name + ".prompts"),
+        () -> assertEqualsAndLog(20, flashCardGroup.getMaximumPrompts(), name + ".maximumPrompts"),
+        () -> assertEqualsAndLog(20, flashCardGroup.getMinimumPrompts(), name + ".minimumPrompts"),
+        () -> assertEqualsAndLog(name, flashCardGroup.getName(), name + ".name"));
   }
 
-  public void testMultiplication(@NonNull FlashCardGroup flashCardGroup, int factor) {
+  public void testMultiplication(
+      String name, @NonNull List<FlashCardGroup> flashCardGroups, int factor) {
     // Setup
+    Optional<FlashCardGroup> optionalQuiz =
+        flashCardGroups.stream()
+            .filter(quiz -> StringUtils.equals(quiz.getName(), name))
+            .findFirst();
+    assertFalse(
+        optionalQuiz.isEmpty(),
+        () ->
+            "'"
+                + name
+                + "' quiz not found in "
+                + flashCardGroups.stream().map(FlashCardGroup::getName).toList());
+    FlashCardGroup flashCardGroup = optionalQuiz.get();
     Optional<Map<String, String>> expectedPrompts =
         IntStream.range(0, 13)
             .mapToObj(
@@ -378,22 +415,26 @@ public class ConfigurationFileContentsTest {
     assertAll(
         () ->
             assertEqualsAndLog(
-                expectedPrompts.get(), flashCardGroup.getPrompts(), "flashCardGroupMap.prompts"),
-        () ->
-            assertEqualsAndLog(
-                Duration.ofMinutes(1),
-                flashCardGroup.getMaxDuration(),
-                "flashCardGroupMap.maxDuration"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMaximumPrompts(), "flashCardGroupMap.maximumPrompts"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMinimumPrompts(), "flashCardGroupMap.minimumPrompts"));
+                expectedPrompts.get(), flashCardGroup.getPrompts(), name + ".prompts"),
+        () -> assertEqualsAndLog(20, flashCardGroup.getMaximumPrompts(), name + ".maximumPrompts"),
+        () -> assertEqualsAndLog(20, flashCardGroup.getMinimumPrompts(), name + ".minimumPrompts"),
+        () -> assertEqualsAndLog(name, flashCardGroup.getName(), name + ".name"));
   }
 
-  public void testDivision(@NonNull FlashCardGroup flashCardGroup, int factor) {
+  public void testDivision(String name, @NonNull List<FlashCardGroup> flashCardGroups, int factor) {
     // Setup
+    Optional<FlashCardGroup> optionalQuiz =
+        flashCardGroups.stream()
+            .filter(quiz -> StringUtils.equals(quiz.getName(), name))
+            .findFirst();
+    assertFalse(
+        optionalQuiz.isEmpty(),
+        () ->
+            "'"
+                + name
+                + "' quiz not found in "
+                + flashCardGroups.stream().map(FlashCardGroup::getName).toList());
+    FlashCardGroup flashCardGroup = optionalQuiz.get();
     Optional<Map<String, String>> expectedPrompts =
         IntStream.range(0, 13)
             .mapToObj(
@@ -415,18 +456,10 @@ public class ConfigurationFileContentsTest {
     assertAll(
         () ->
             assertEqualsAndLog(
-                expectedPrompts.get(), flashCardGroup.getPrompts(), "flashCardGroupMap.prompts"),
-        () ->
-            assertEqualsAndLog(
-                Duration.ofMinutes(1),
-                flashCardGroup.getMaxDuration(),
-                "flashCardGroupMap.maxDuration"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMaximumPrompts(), "flashCardGroupMap.maximumPrompts"),
-        () ->
-            assertEqualsAndLog(
-                20, flashCardGroup.getMinimumPrompts(), "flashCardGroupMap.minimumPrompts"));
+                expectedPrompts.get(), flashCardGroup.getPrompts(), name + ".prompts"),
+        () -> assertEqualsAndLog(20, flashCardGroup.getMaximumPrompts(), name + ".maximumPrompts"),
+        () -> assertEqualsAndLog(20, flashCardGroup.getMinimumPrompts(), name + ".minimumPrompts"),
+        () -> assertEqualsAndLog(name, flashCardGroup.getName(), name + ".name"));
   }
 
   public void testContents(@NonNull MetricsFactory metrics) {
@@ -508,7 +541,7 @@ public class ConfigurationFileContentsTest {
     DefaultLoggingFactory defaultLoggingFactory = (DefaultLoggingFactory) logging;
     // Immediate field validations
     assertAll(
-        () -> assertEqualsAndLog("DEBUG", defaultLoggingFactory.getLevel(), prefix + ".level"),
+        () -> assertEqualsAndLog("INFO", defaultLoggingFactory.getLevel(), prefix + ".level"),
         () -> assertNotNullAndLog(defaultLoggingFactory.getAppenders(), prefix + ".appenders"),
         () -> assertNotNullAndLog(defaultLoggingFactory.getLoggers(), prefix + ".loggers"));
     assertAllFieldsUsedAndClear();
@@ -528,7 +561,7 @@ public class ConfigurationFileContentsTest {
     assertEquals(1, loggers.size(), "loggers.size");
     // Immediate fields
     assertNotNullAndLog(codingChicaLogger, prefix);
-    assertEqualsAndLog("DEBUG", codingChicaLogger.asText(), prefix + ".level");
+    assertEqualsAndLog("INFO", codingChicaLogger.asText(), prefix + ".level");
     assertAllFieldsUsedAndClear();
     // No nested objects to validate
   }
@@ -719,7 +752,11 @@ public class ConfigurationFileContentsTest {
    */
   private void validateContents_server_applicationConnectors(
       List<ConnectorFactory> applicationConnectors) {
-    validateContents_server_httpConnectorFactory(8080, applicationConnectors);
+    if (isTestConfig) {
+      validateContents_server_httpConnectorFactory(0, applicationConnectors);
+    } else {
+      validateContents_server_httpConnectorFactory(8080, applicationConnectors);
+    }
   }
 
   /**
@@ -732,7 +769,11 @@ public class ConfigurationFileContentsTest {
    */
   private void validateContents_server_adminConnectors(
       List<ConnectorFactory> applicationConnectors) {
-    validateContents_server_httpConnectorFactory(8081, applicationConnectors);
+    if (isTestConfig) {
+      validateContents_server_httpConnectorFactory(0, applicationConnectors);
+    } else {
+      validateContents_server_httpConnectorFactory(8081, applicationConnectors);
+    }
   }
 
   /**

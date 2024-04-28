@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import java.util.List;
 import java.util.Map;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
@@ -23,14 +24,13 @@ import org.hibernate.validator.constraints.Length;
 // creation.
 @Getter
 public class FlashCardsConfiguration extends Configuration {
-  @JsonProperty("flashCardGroupMap")
-  @NotEmpty
+  @JsonProperty @NotEmpty
   private Map<
           @Length(max = 30, message = "must be 30 characters or less") @NotBlank
           @Pattern(
               regexp = "[\\w \\d]*",
               message = "must contain only alpha-numeric characters and spaces")
           String,
-          @Valid @NotNull FlashCardGroup>
+          @Valid @NotNull List<@Valid @NotNull FlashCardGroup>>
       flashCardGroupMap;
 }

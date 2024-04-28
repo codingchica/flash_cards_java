@@ -1,0 +1,57 @@
+
+ons-card {
+    cursor: pointer;
+    color: #333;
+}
+
+ons-modal div {
+  padding: 70px 0;
+  line-height: 200px;
+  height: 200px;
+  text-align: center;
+  color: white;
+}
+
+.card__title,
+.card--material__title {
+    font-size: 20px;
+}
+
+.green {
+    color: #22d122;
+}
+
+.intro {
+    text-align: center;
+    padding: 0 20px;
+    margin-top: 40px;
+}
+
+.prompt_count {
+    padding-right: 1em;
+    font-style: italic;
+    font-size: 80%;
+    vertical-align: super;
+    position: relative;
+    top: -0.5em;
+}
+
+.right {
+    padding-right: 1em;
+    margin-right: 1em;
+}
+
+.right-icon {
+    margin-left: 10px;
+}
+
+.right-label {
+    color: #666;
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+

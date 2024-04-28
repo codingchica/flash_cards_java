@@ -1,4 +1,4 @@
-package com.codingchica.flashcards.core.validators;
+package com.codingchica.flashcards.core.validators.external;
 
 import com.codingchica.flashcards.core.config.FlashCardGroup;
 import com.codingchica.flashcards.core.validations.MinMaxPromptCountsValid;

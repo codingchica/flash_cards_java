@@ -1,7 +1,7 @@
 logging:
   level: "INFO"
   loggers:
-    codingchica: "DEBUG"
+    codingchica: "INFO"
 server:
   applicationConnectors:
   - type: "http"
@@ -10,8 +10,8 @@ server:
   - type: "http"
     port: 0
 flashCardGroupMap:
-  Adding By 00:
-    maxDuration: "PT30S"
+  Addition:
+  - name: "Adding 0"
     prompts:
       "0+0": 0
       "0+1": 1
