@@ -129,19 +129,22 @@ public class GenericCLISteps {
       String outputLogSnippetForShutdown)
       throws IOException {
     List<String> lines = new ArrayList<>();
-    String nextLine;
-    do {
-      nextLine = bufferedReader.readLine();
-      log.debug(nextLine);
-      if (nextLine != null) {
-        world.outputLines.add(nextLine);
-        if (stopWhenKeywordInLogs && StringUtils.contains(nextLine, outputLogSnippetForShutdown)) {
-          log.debug("Server started successfully - stopping server");
-          process.destroyForcibly();
-          break;
+    if (bufferedReader.ready()) {
+      String nextLine;
+      do {
+        nextLine = bufferedReader.readLine();
+        log.debug(nextLine);
+        if (nextLine != null) {
+          world.outputLines.add(nextLine);
+          if (stopWhenKeywordInLogs
+              && StringUtils.contains(nextLine, outputLogSnippetForShutdown)) {
+            log.debug("Server started successfully - stopping server");
+            process.destroyForcibly();
+            break;
+          }
         }
-      }
-    } while (nextLine != null);
+      } while (nextLine != null);
+    }
     return lines;
   }
 
