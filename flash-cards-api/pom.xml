@@ -325,14 +325,10 @@
               <includes>
                 <include>**/*ComponentSuite.java</include>
               </includes>
-              <redirectTestOutputToFile>true</redirectTestOutputToFile>
               <reportsDirectory>${project.build.directory}/component-tests</reportsDirectory>
               <excludes>
                 <exclude>**/*Test.java</exclude>
               </excludes>
-              <parallel>both</parallel>
-              <threadCount>1</threadCount>
-              <perCoreThreadCount>false</perCoreThreadCount>
               <redirectTestOutputToFile>false</redirectTestOutputToFile>
             </configuration>
           </execution>

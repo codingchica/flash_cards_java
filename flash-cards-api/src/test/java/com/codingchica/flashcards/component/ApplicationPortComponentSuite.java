@@ -26,11 +26,11 @@ import org.junit.platform.suite.api.Suite;
     // Folder from which test scenarios are retrieved from feature file(s) in this folder.
     // This could also point to an individual feature file, if desired.
     // Relies upon filtered properties / dynamic values
-    "features")
+    "features/applicationPort")
 @ConfigurationParameter(
     // Package where the steps are defined for the tests in the feature file(s) selected.
     key = GLUE_PROPERTY_NAME,
-    value = "com.codingchica.flashcards.component.steps")
+    value = "com.codingchica.flashcards.component.steps.api")
 @ConfigurationParameter(
     // Limits the suite's scope to just those tagged with the value provided, in case the same
     // feature file contains multiple types of test scenarios.
@@ -42,7 +42,7 @@ import org.junit.platform.suite.api.Suite;
     // output the banner asking them to publish the reports.
     key = PLUGIN_PUBLISH_QUIET_PROPERTY_NAME,
     value = "true")
-public class ComponentSuite {
+public class ApplicationPortComponentSuite {
   // Actual tests are retrieved by reading the feature file(s) specified above.
   // No actual code is expected in this file.
 }

@@ -1,4 +1,4 @@
-package com.codingchica.flashcards.component.steps;
+package com.codingchica.flashcards.component.steps.api;
 
 import static org.junit.jupiter.api.Assertions.*;
 

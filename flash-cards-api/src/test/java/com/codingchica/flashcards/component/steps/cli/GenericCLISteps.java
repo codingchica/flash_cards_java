@@ -1,8 +1,9 @@
-package com.codingchica.flashcards.component.steps;
+package com.codingchica.flashcards.component.steps.cli;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.codingchica.flashcards.component.model.CLIWorld;
+import io.cucumber.java.After;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -278,5 +279,17 @@ public class GenericCLISteps {
     assertTrue(
         CollectionUtils.isEmpty(world.errorOutputLines),
         "Expected empty error output, but saw: " + world.errorOutputLines);
+  }
+
+  /**
+   * To avoid exceeding GitHub limits, add a delay between CLI test cases, so that we have a chance
+   * to clean-up resources.
+   *
+   * @throws InterruptedException If sleep is interrupted.
+   */
+  @After
+  public void waitForDuration() throws InterruptedException {
+    log.debug("*************SLEEEPING*************");
+    Thread.sleep(1000);
   }
 }
