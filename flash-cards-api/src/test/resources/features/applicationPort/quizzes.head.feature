@@ -1,5 +1,7 @@
 # See Gherkin syntax reference: https://cucumber.io/docs/gherkin/reference/
 @quizzes
+@github
+@Component
 Feature: Quizzes API - Head - Success
 
   Background:
@@ -8,7 +10,6 @@ Feature: Quizzes API - Head - Success
 
   Rule:  When successful, the expected response should be returned.
 
-    @Component
     Scenario Outline: Success for ListQuizzes.
       Given that my request uses the <HTTPMethod> method
       And that my request goes to endpoint quizzes
@@ -19,7 +20,6 @@ Feature: Quizzes API - Head - Success
         | HTTPMethod |
         | HEAD       |
 
-    @Component
     Scenario Outline: Success for GetQuiz.
       Given that my request uses the <HTTPMethod> method
       And that my request goes to endpoint quizzes/Adding%200

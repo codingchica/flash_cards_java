@@ -1,5 +1,7 @@
 # See Gherkin syntax reference: https://cucumber.io/docs/gherkin/reference/
 @metrics
+@github
+@Component
 Feature: Metrics API
 
   Background:
@@ -7,7 +9,6 @@ Feature: Metrics API
     And that my request goes to the admin port
     And that my request goes to endpoint metrics
 
-  @Component
   Scenario Outline: GET call returns successful response.
     Given that my request contains header Content-Type = <expectedResponseType>
     And that my request contains header Accept = <expectedResponseType>
@@ -22,7 +23,6 @@ Feature: Metrics API
       | application/json     |
       | application/html     |
 
-  @Component
   Scenario Outline: HEAD/OPTIONS call returns successful response.
     Given that my request uses the <HTTPMethod> method
     When I submit the request
@@ -33,7 +33,6 @@ Feature: Metrics API
       | HEAD       |
       | OPTIONS    |
 
-  @Component
   Scenario Outline: Unsupported methods.
     Given that my request uses the <HTTPMethod> method
     When I submit the request

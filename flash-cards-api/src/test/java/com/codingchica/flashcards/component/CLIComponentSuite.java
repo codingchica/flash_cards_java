@@ -32,11 +32,6 @@ import org.junit.platform.suite.api.Suite;
     key = GLUE_PROPERTY_NAME,
     value = "com.codingchica.flashcards.component.steps.cli")
 @ConfigurationParameter(
-    // Limits the suite's scope to just those tagged with the value provided, in case the same
-    // feature file contains multiple types of test scenarios.
-    key = FILTER_TAGS_PROPERTY_NAME,
-    value = "@Component")
-@ConfigurationParameter(
     // Even if someone hasn't set up the IDE execution to read from the
     // src/test/resources/cucumber.properties file, (or corresponding environment variables), don't
     // output the banner asking them to publish the reports.

@@ -1,12 +1,13 @@
 # See Gherkin syntax reference: https://cucumber.io/docs/gherkin/reference/
 @quizzes
+@github
+@Component
 Feature: Quizzes API - Unsupported Methods
 
   Background:
     Given that my request uses the http protocol
     And that my request goes to the application port
 
-  @Component
   Scenario Outline: List Quizzes - 405 Method Not Supported
     Given that my request uses the <HTTPMethod> method
     And that my request goes to endpoint quizzes
@@ -19,7 +20,6 @@ Feature: Quizzes API - Unsupported Methods
       | TRACE      |
       | DELETE     |
 
-  @Component
   Scenario Outline: Get Quiz - 405 Method Not Supported
     Given that my request uses the <HTTPMethod> method
     And that my request goes to endpoint quizzes/Adding%20By%2000
@@ -33,7 +33,6 @@ Feature: Quizzes API - Unsupported Methods
       | DELETE     |
 
 
-  @Component
   Scenario Outline: Grade Quiz - 405 Method Not Supported
     Given that my request uses the <HTTPMethod> method
     And that my request is for a valid quiz ID

@@ -1,5 +1,7 @@
 # See Gherkin syntax reference: https://cucumber.io/docs/gherkin/reference/
 @quizzes
+@github
+@Component
 Feature: Quiz - List
 
   Background:
@@ -10,7 +12,6 @@ Feature: Quiz - List
 
   Rule:  Input validation should be performed on all inputs consumed.
 
-    @Component
     Scenario Outline: Failures - Unsupported Response Content Types
       Given that my request contains header Accept = <MIMEType>
       When I submit the request
@@ -26,7 +27,6 @@ Feature: Quiz - List
         | application/zip       |
         | text/plain            |
 
-    @Component
     Scenario Outline: Various Request Content Types
       Given that my request contains header Content-Type = <MIMEType>
       And that my request contains header Accept = application/json
@@ -44,7 +44,6 @@ Feature: Quiz - List
 
   Rule:  When successful, the expected response should be returned.
 
-    @Component
     Scenario: Successful API call
       Given that my request contains header Content-Type = application/json
       And that my request contains header Accept = application/json

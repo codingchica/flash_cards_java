@@ -19,6 +19,8 @@
 
   <properties>
     <mainClass>com.codingchica.flashcards.FlashCardsApplication</mainClass>
+    <component-tags>@Component</component-tags>
+    <component-test-min-coverage>0.75</component-test-min-coverage>
   </properties>
 
   <dependencies>
@@ -321,6 +323,7 @@
               <systemPropertyVariables>
                 <project.artifactId>${project.artifactId}</project.artifactId>
                 <project.version>${project.version}</project.version>
+                <cucumber.filter.tags>${component-tags}</cucumber.filter.tags>
               </systemPropertyVariables>
               <includes>
                 <include>**/*ComponentSuite.java</include>
@@ -329,6 +332,8 @@
               <excludes>
                 <exclude>**/*Test.java</exclude>
               </excludes>
+              <parallel>both</parallel>
+              <threadCount>4</threadCount>
               <redirectTestOutputToFile>false</redirectTestOutputToFile>
             </configuration>
           </execution>
@@ -461,7 +466,7 @@
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.75</minimum>
+                      <minimum>${component-test-min-coverage}</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
@@ -477,4 +482,13 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>github-server</id>
+      <properties>
+        <component-tags>@Component and @github</component-tags>
+        <component-test-min-coverage>0.75</component-test-min-coverage>
+      </properties>
+    </profile>
+  </profiles>
 </project>

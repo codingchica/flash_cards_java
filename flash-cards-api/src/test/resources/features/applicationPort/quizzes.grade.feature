@@ -1,5 +1,7 @@
 # See Gherkin syntax reference: https://cucumber.io/docs/gherkin/reference/
 @quizzes
+@github
+@Component
 Feature: Quiz - Grade
 
   Background:
@@ -11,7 +13,6 @@ Feature: Quiz - Grade
 
   Rule:  Input validation should be performed on all inputs consumed.
 
-    @Component
     Scenario: Failures - Quiz Not Found
       Given that my request contains header Content-Type = application/json
       Given that my request contains header Accept = application/json
@@ -23,7 +24,6 @@ Feature: Quiz - Grade
         | code    | 404                       |
         | message | Quiz='{NEW_ID}' not found |
 
-    @Component
     Scenario: Failures - Quiz ID Not UUID
       Given that my request contains header Content-Type = application/json
       Given that my request contains header Accept = application/json
@@ -35,7 +35,6 @@ Feature: Quiz - Grade
         | code    | 404                |
         | message | HTTP 404 Not Found |
 
-    @Component
     Scenario: Failures - Quiz Name Mismatch
       Given that my request contains header Content-Type = application/json
       Given that my request contains header Accept = application/json
@@ -47,7 +46,6 @@ Feature: Quiz - Grade
         | code    | 404                |
         | message | Quiz name mismatch |
 
-    @Component
     Scenario Outline: Failures - Unsupported Request Content Types
       Given that my request contains header Content-Type = <MIMEType>
       Given that my request contains header Accept = application/json
@@ -66,7 +64,6 @@ Feature: Quiz - Grade
         | application/zip       |
         | text/plain            |
 
-    @Component
     Scenario Outline: Failures - Unsupported Response Content Types
       Given that my request contains header Content-Type = application/json
       Given that my request contains header Accept = <MIMEType>
@@ -85,7 +82,6 @@ Feature: Quiz - Grade
         | application/zip       |
         | text/plain            |
 
-    @Component
     Scenario Outline: Various Request Content Types
       Given that my request contains header Content-Type = <MIMEType>
       And that my request contains header Accept = application/json
@@ -104,7 +100,6 @@ Feature: Quiz - Grade
 
   Rule:  When successful, the expected response should be returned.
 
-    @Component
     Scenario Outline: Quiz is correctly graded.
       Given that my request contains header Content-Type = application/json
       And that my request contains header Accept = application/json

@@ -1,5 +1,7 @@
 # See Gherkin syntax reference: https://cucumber.io/docs/gherkin/reference/
 @ping
+@github
+@Component
 Feature: Ping API
 
   Background:
@@ -7,7 +9,6 @@ Feature: Ping API
     And that my request goes to the admin port
     And that my request goes to endpoint ping
 
-  @Component
   Scenario Outline: GET call returns successful response.
     Given that my request contains header Content-Type = <expectedResponseType>
     And that my request contains header Accept = <expectedResponseType>
@@ -20,7 +21,6 @@ Feature: Ping API
       | application/json     |
       | application/html     |
 
-  @Component
   Scenario Outline: HEAD/OPTIONS call returns successful response.
     Given that my request uses the <HTTPMethod> method
     When I submit the request
@@ -31,7 +31,6 @@ Feature: Ping API
       | HEAD       |
       | OPTIONS    |
 
-  @Component
   Scenario Outline: Unsupported methods.
     Given that my request uses the <HTTPMethod> method
     When I submit the request
